@@ -5,36 +5,42 @@ export function Header() {
   const { lang } = useLanguage();
 
   return (
-    <header className="bg-white border-b border-gray-200 w-full">
-      <div className="max-w-md mx-auto px-4 py-3 flex items-center justify-between">
-        {/* Left: Payment Gateway Text (Matching Image) */}
-        <div className="flex flex-col items-start">
-          <div className="text-[#004A80] font-bold text-sm leading-tight">
-            {lang === "ar" ? "بوابة الدفع" : "Payment Gateway"}
+    <header className="bg-white border-b border-gray-100 w-full">
+      <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
+        {/* Left: Payment Gateway Text */}
+        <div className="flex items-center gap-4">
+          <div className="flex flex-col items-center">
+            <span className="text-[20px] font-bold text-[#003E66] leading-tight">
+              {lang === "ar" ? "بوابة الدفع" : "Payment Gateway"}
+            </span>
+            <span className="text-[14px] font-medium text-[#003E66] leading-tight">
+              Payment Gateway
+            </span>
           </div>
-          <div className="text-gray-500 text-[10px] font-medium leading-tight">
-            Payment Gateway
+          
+          {/* Vertical Divider */}
+          <div className="h-12 w-[1.5px] bg-[#8A1538] mx-2"></div>
+          
+          {/* MOI Text */}
+          <div className="flex flex-col items-start">
+            <span className="text-[20px] font-bold text-[#003E66] leading-tight">
+              {lang === "ar" ? "وزارة الداخلية" : "Ministry of Interior"}
+            </span>
+            <span className="text-[14px] font-medium text-[#003E66] leading-tight">
+              {lang === "ar" ? "دولة قطر" : "Ministry of Interior"}
+            </span>
+            <span className="text-[12px] font-medium text-[#003E66] leading-tight">
+              State of Qatar • دولة قطر
+            </span>
           </div>
         </div>
 
-        {/* Center: Divider */}
-        <div className="h-10 w-[1.5px] bg-[#8A1538] mx-2"></div>
-
-        {/* Right: MOI Logo & Text (Matching Image) */}
-        <div className="flex items-center gap-3 flex-1 justify-end">
-          <div className="flex flex-col items-end">
-            <div className="text-[#004A80] font-bold text-sm leading-tight text-right">
-              {lang === "ar" ? "وزارة الداخلية" : "Ministry of Interior"}
-            </div>
-            <div className="text-gray-500 text-[10px] font-medium leading-tight text-right">
-              {lang === "ar" ? "دولة قطر" : "State of Qatar"} • State of Qatar
-            </div>
-          </div>
-          {/* Official MOI Emblem */}
+        {/* Right: MOI Emblem */}
+        <div className="flex items-center">
           <img 
-            src="/qatar-moi-logo-new.png" 
+            src="/qatar-moi-logo-final.png" 
             alt="MOI Logo" 
-            className="h-12 w-auto object-contain"
+            className="h-20 w-auto object-contain"
           />
         </div>
       </div>

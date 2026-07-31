@@ -1,38 +1,50 @@
 import React from "react";
 
-export function CarIcon() {
+export function CarIcon({ active }: { active?: boolean }) {
+  const color = active ? "#003E66" : "#A0AEC0";
   return (
-    <svg viewBox="0 0 100 100" className="w-12 h-12" xmlns="http://www.w3.org/2000/svg">
-      {/* Official MOI Vehicle Plate Icon Style */}
-      <path d="M15 55 Q15 45 25 45 L75 45 Q85 45 85 55 L85 70 Q85 75 75 75 L25 75 Q15 75 15 70 Z" fill="none" stroke="#004A80" strokeWidth="2.5" />
-      <path d="M25 45 L30 35 Q32 30 40 30 L60 30 Q68 30 70 35 L75 45" fill="none" stroke="#004A80" strokeWidth="2.5" />
-      <circle cx="30" cy="75" r="7" fill="white" stroke="#004A80" strokeWidth="2.5" />
-      <circle cx="70" cy="75" r="7" fill="white" stroke="#004A80" strokeWidth="2.5" />
-      <rect x="35" y="55" width="30" height="10" rx="1" fill="none" stroke="#004A80" strokeWidth="1.5" />
+    <svg viewBox="0 0 100 100" className="w-14 h-14" xmlns="http://www.w3.org/2000/svg">
+      {/* Car Body */}
+      <path d="M20 50 Q20 42 30 42 L70 42 Q80 42 80 50 L80 65 Q80 68 75 68 L25 68 Q20 68 20 65 Z" fill="none" stroke={color} strokeWidth="2" />
+      {/* Roof */}
+      <path d="M32 42 L38 32 Q40 28 48 28 L52 28 Q60 28 62 32 L68 42" fill="none" stroke={color} strokeWidth="2" />
+      {/* Wheels */}
+      <circle cx="32" cy="68" r="5" fill="white" stroke={color} strokeWidth="2" />
+      <circle cx="68" cy="68" r="5" fill="white" stroke={color} strokeWidth="2" />
+      {/* Lights */}
+      <rect x="25" y="52" width="8" height="4" rx="1" fill="none" stroke={color} strokeWidth="1.5" />
+      <rect x="67" y="52" width="8" height="4" rx="1" fill="none" stroke={color} strokeWidth="1.5" />
     </svg>
   );
 }
 
-export function PersonIcon() {
+export function PersonIcon({ active }: { active?: boolean }) {
+  const color = active ? "#003E66" : "#A0AEC0";
   return (
-    <svg viewBox="0 0 100 100" className="w-12 h-12" xmlns="http://www.w3.org/2000/svg">
-      {/* Official MOI QID Icon Style (Ghutra/Qatari Dress) */}
-      <path d="M50 20 C40 20 35 25 35 35 C35 45 40 50 50 50 C60 50 65 45 65 35 C65 25 60 20 50 20" fill="none" stroke="#004A80" strokeWidth="2.5" />
-      <path d="M30 30 Q50 15 70 30 L75 45 Q75 55 65 60 L65 80 L35 80 L35 60 Q25 55 25 45 Z" fill="none" stroke="#004A80" strokeWidth="2.5" />
-      <path d="M40 80 L30 90 M60 80 L70 90" stroke="#004A80" strokeWidth="2.5" strokeLinecap="round" />
+    <svg viewBox="0 0 100 100" className="w-14 h-14" xmlns="http://www.w3.org/2000/svg">
+      {/* Ghutra Outline */}
+      <path d="M30 35 Q50 15 70 35 L75 50 Q75 60 65 65 L65 80 L35 80 L35 65 Q25 60 25 50 Z" fill="none" stroke={color} strokeWidth="2" />
+      {/* Face */}
+      <path d="M42 45 Q50 52 58 45" fill="none" stroke={color} strokeWidth="1.5" />
+      {/* Shoulders */}
+      <path d="M35 80 L25 90 M65 80 L75 90" stroke={color} strokeWidth="2" strokeLinecap="round" />
     </svg>
   );
 }
 
-export function BuildingIcon() {
+export function BuildingIcon({ active }: { active?: boolean }) {
+  const color = active ? "#003E66" : "#A0AEC0";
   return (
-    <svg viewBox="0 0 100 100" className="w-12 h-12" xmlns="http://www.w3.org/2000/svg">
-      {/* Official MOI Establishment Icon Style */}
-      <rect x="20" y="30" width="60" height="50" rx="2" fill="none" stroke="#004A80" strokeWidth="2.5" />
-      <path d="M20 30 L50 15 L80 30" fill="none" stroke="#004A80" strokeWidth="2.5" strokeLinejoin="round" />
-      <rect x="42" y="60" width="16" height="20" fill="none" stroke="#004A80" strokeWidth="2" />
-      <rect x="30" y="40" width="10" height="10" rx="1" fill="none" stroke="#004A80" strokeWidth="1.5" />
-      <rect x="60" y="40" width="10" height="10" rx="1" fill="none" stroke="#004A80" strokeWidth="1.5" />
+    <svg viewBox="0 0 100 100" className="w-14 h-14" xmlns="http://www.w3.org/2000/svg">
+      {/* Building Body */}
+      <rect x="25" y="35" width="50" height="45" rx="2" fill="none" stroke={color} strokeWidth="2" />
+      {/* Roof Details */}
+      <path d="M35 35 L35 25 L45 25 L45 35 M55 35 L55 25 L65 25 L65 35" fill="none" stroke={color} strokeWidth="2" />
+      {/* Windows */}
+      <rect x="35" y="45" width="10" height="10" rx="1" fill="none" stroke={color} strokeWidth="1.5" />
+      <rect x="55" y="45" width="10" height="10" rx="1" fill="none" stroke={color} strokeWidth="1.5" />
+      {/* Door */}
+      <rect x="44" y="65" width="12" height="15" fill="none" stroke={color} strokeWidth="1.5" />
     </svg>
   );
 }
