@@ -42,20 +42,29 @@ export const Footer = () => {
 
         {/* Social Media and Copyright */}
         <div className={`flex flex-col md:flex-row items-center justify-between pt-8 border-t border-gray-200 gap-6 ${isAr ? "md:flex-row-reverse" : ""}`}>
-          {/* Social Icons Placeholder - User will provide links */}
-          <div className="flex items-center gap-4">
-            <a href="#" className="w-8 h-8 rounded-full bg-[#003E66] flex items-center justify-center text-white hover:bg-[#002A44] transition-all">
-              <span className="text-xs">𝕏</span>
-            </a>
-            <a href="#" className="w-8 h-8 rounded-full bg-[#003E66] flex items-center justify-center text-white hover:bg-[#002A44] transition-all">
-              <span className="text-xs">f</span>
-            </a>
-            <a href="#" className="w-8 h-8 rounded-full bg-[#003E66] flex items-center justify-center text-white hover:bg-[#002A44] transition-all">
-              <span className="text-xs">in</span>
-            </a>
-            <a href="#" className="w-8 h-8 rounded-full bg-[#003E66] flex items-center justify-center text-white hover:bg-[#002A44] transition-all">
-              <span className="text-xs">📸</span>
-            </a>
+          {/* Trust and Social Icons */}
+          <div className="flex items-center gap-6">
+            {/* Trust Icons */}
+            <div className="flex items-center gap-3 border-r border-gray-300 pr-6 mr-2">
+              <img src="https://i.ibb.co/3YCP2cj7/webtrust.png" alt="WebTrust" className="h-10 object-contain" />
+              <img src="https://i.ibb.co/nMsvT5HQ/mada-ar.png" alt="Mada" className="h-10 object-contain" />
+            </div>
+
+            {/* Social Icons */}
+            <div className="flex items-center gap-3">
+              <a href="#" className="w-8 h-8 rounded-full bg-[#003E66] flex items-center justify-center text-white hover:bg-[#002A44] transition-all">
+                <span className="text-xs">𝕏</span>
+              </a>
+              <a href="#" className="w-8 h-8 rounded-full bg-[#003E66] flex items-center justify-center text-white hover:bg-[#002A44] transition-all">
+                <span className="text-xs">f</span>
+              </a>
+              <a href="#" className="w-8 h-8 rounded-full bg-[#003E66] flex items-center justify-center text-white hover:bg-[#002A44] transition-all">
+                <span className="text-xs">in</span>
+              </a>
+              <a href="#" className="w-8 h-8 rounded-full bg-[#003E66] flex items-center justify-center text-white hover:bg-[#002A44] transition-all">
+                <span className="text-xs">📸</span>
+              </a>
+            </div>
           </div>
 
           {/* Copyright Text */}
