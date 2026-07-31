@@ -1,24 +1,14 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import {
   Search,
-  CreditCard,
-  ChevronRight,
-  AlertCircle,
-  CheckCircle2,
   Loader2,
   Globe,
-  User,
-  Building2,
-  Car
+  Menu
 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-
-const QATAR_MOI_LOGO = "/qatar-moi-logo.png";
-const QATAR_HEADER_IMAGE = "/qatar-header-full.jpg";
 
 export default function Home() {
   const { lang } = useLanguage();
@@ -50,11 +40,6 @@ export default function Home() {
       toast.error(lang === "ar" ? "يرجى إدخال رقم اللوحة" : "Please enter plate number");
       return;
     }
-    if (inquiryType !== "plate" && !ownerId) {
-      toast.error(lang === "ar" ? "يرجى إدخال الرقم المطلوب" : "Please enter required ID");
-      return;
-    }
-
     queryMutation.mutate({
       inquiryType,
       plateSource: inquiryType === "plate" ? plateSource : undefined,
@@ -67,71 +52,98 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8F9FA] font-sans rtl" dir="rtl">
-      {/* Header Image */}
-      <div className="w-full">
-        <img src={QATAR_HEADER_IMAGE} alt="MOI Header" className="w-full h-auto object-contain shadow-sm" />
+    <div className="min-h-screen bg-[#E9F1F4] font-sans rtl" dir="rtl">
+      {/* Top Header Bar */}
+      <header className="bg-[#008A95] p-3 flex justify-between items-center text-white">
+        <div className="flex items-center gap-4">
+          <Menu size={24} />
+          <div className="flex items-center gap-1">
+            <span className="text-sm font-bold">2:48</span>
+            <div className="flex gap-0.5">
+              <div className="w-1 h-3 bg-white opacity-40"></div>
+              <div className="w-1 h-3 bg-white"></div>
+            </div>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-xs">4G</span>
+          <div className="w-5 h-2.5 border border-white rounded-sm relative">
+            <div className="absolute left-0 top-0 h-full bg-white w-3/4"></div>
+          </div>
+        </div>
+      </header>
+
+      {/* Main MOI Logo Header */}
+      <div className="bg-white py-4 px-6 flex justify-between items-center border-b border-gray-100 shadow-sm">
+        <div className="flex items-center gap-4">
+           <img src="/qatar-payment-text.png" alt="Payment Gateway" className="h-12 object-contain" />
+        </div>
+        <div className="h-10 w-[1px] bg-gray-300 mx-2"></div>
+        <div className="flex items-center">
+           <img src="/qatar-moi-logo-new.png" alt="MOI Qatar" className="h-16 object-contain" />
+        </div>
       </div>
 
-      <main className="max-w-md mx-auto px-4 py-8">
-        <h1 className="text-2xl font-bold text-[#004A80] text-center mb-8">
-          {lang === "ar" ? "الاستعلام عن المخالفات المرورية" : "Traffic Violations Inquiry"}
-        </h1>
+      <main className="max-w-md mx-auto px-4 py-6">
+        <div className="flex items-center justify-between mb-6">
+           <button className="border border-gray-300 rounded px-3 py-1 text-sm flex items-center gap-2 text-[#004A80]">
+             English <Globe size={14} />
+           </button>
+           <h1 className="text-xl font-bold text-[#004A80]">
+             {lang === "ar" ? "الإستعلام عن المخالفات المرورية" : "Traffic Violations Inquiry"}
+           </h1>
+        </div>
 
-        {/* Inquiry Tabs */}
-        <div className="grid grid-cols-3 gap-2 mb-8">
-          <button
-            onClick={() => setInquiryType("plate")}
-            className={`flex flex-col items-center p-4 rounded-xl border-2 transition-all ${
-              inquiryType === "plate" ? "border-[#004A80] bg-white shadow-md" : "border-transparent bg-gray-50"
-            }`}
-          >
-            <Car className={inquiryType === "plate" ? "text-[#004A80]" : "text-gray-400"} />
-            <span className={`text-xs mt-2 ${inquiryType === "plate" ? "text-[#004A80] font-bold" : "text-gray-500"}`}>
-              {lang === "ar" ? "رقم المركبة" : "Vehicle Plate"}
-            </span>
-          </button>
-          <button
-            onClick={() => setInquiryType("qid")}
-            className={`flex flex-col items-center p-4 rounded-xl border-2 transition-all ${
-              inquiryType === "qid" ? "border-[#004A80] bg-white shadow-md" : "border-transparent bg-gray-50"
-            }`}
-          >
-            <User className={inquiryType === "qid" ? "text-[#004A80]" : "text-gray-400"} />
-            <span className={`text-xs mt-2 ${inquiryType === "qid" ? "text-[#004A80] font-bold" : "text-gray-500"}`}>
-              {lang === "ar" ? "الرقم الشخصي" : "QID Number"}
-            </span>
-          </button>
+        {/* Tabs Row */}
+        <div className="flex justify-center gap-4 mb-8">
           <button
             onClick={() => setInquiryType("establishment")}
-            className={`flex flex-col items-center p-4 rounded-xl border-2 transition-all ${
-              inquiryType === "establishment" ? "border-[#004A80] bg-white shadow-md" : "border-transparent bg-gray-50"
+            className={`w-24 h-24 flex flex-col items-center justify-center rounded-2xl border transition-all ${
+              inquiryType === "establishment" ? "border-[#004A80] bg-white shadow-md ring-1 ring-[#004A80]" : "border-transparent bg-white shadow-sm"
             }`}
           >
-            <Building2 className={inquiryType === "establishment" ? "text-[#004A80]" : "text-gray-400"} />
-            <span className={`text-xs mt-2 ${inquiryType === "establishment" ? "text-[#004A80] font-bold" : "text-gray-500"}`}>
-              {lang === "ar" ? "قيد المنشأة" : "Establishment"}
-            </span>
+            <img src="/icon-establishment.png" alt="" className="w-12 h-12 object-contain" />
+            <span className="text-[10px] mt-1 text-gray-600 font-bold">قيد المنشأة</span>
+          </button>
+          
+          <button
+            onClick={() => setInquiryType("qid")}
+            className={`w-24 h-24 flex flex-col items-center justify-center rounded-2xl border transition-all ${
+              inquiryType === "qid" ? "border-[#004A80] bg-white shadow-md ring-1 ring-[#004A80]" : "border-transparent bg-white shadow-sm"
+            }`}
+          >
+            <img src="/icon-qid.png" alt="" className="w-12 h-12 object-contain" />
+            <span className="text-[10px] mt-1 text-gray-600 font-bold">الرقم الشخصي</span>
+          </button>
+
+          <button
+            onClick={() => setInquiryType("plate")}
+            className={`w-24 h-24 flex flex-col items-center justify-center rounded-2xl border transition-all ${
+              inquiryType === "plate" ? "border-[#004A80] bg-white shadow-md ring-1 ring-[#004A80]" : "border-transparent bg-white shadow-sm"
+            }`}
+          >
+            <img src="/icon-plate.png" alt="" className="w-12 h-12 object-contain" />
+            <span className="text-[10px] mt-1 text-gray-600 font-bold">رقم المركبة</span>
           </button>
         </div>
 
-        {/* Inquiry Form */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-          <h2 className="text-lg font-bold text-[#004A80] text-center mb-6">
-            {inquiryType === "plate" && (lang === "ar" ? "استعلام برقم المركبة" : "Inquiry by Vehicle Plate")}
-            {inquiryType === "qid" && (lang === "ar" ? "استعلام بالرقم الشخصي" : "Inquiry by QID")}
-            {inquiryType === "establishment" && (lang === "ar" ? "استعلام بقيد المنشأة" : "Inquiry by Establishment")}
+        {/* Inquiry Card */}
+        <div className="bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100">
+          <h2 className="text-xl font-bold text-[#004A80] text-center mb-8">
+            {inquiryType === "plate" && "استعلام برقم المركبة"}
+            {inquiryType === "qid" && "استعلام بالرقم الشخصي"}
+            {inquiryType === "establishment" && "استعلام بقيد المنشأة"}
           </h2>
 
-          <div className="space-y-4">
+          <div className="space-y-6">
             {inquiryType === "plate" && (
               <>
-                <div>
-                  <label className="block text-sm text-gray-600 mb-1">{lang === "ar" ? "البلد" : "Country"}</label>
+                <div className="space-y-1">
+                  <label className="block text-sm text-gray-500 text-left">البلد</label>
                   <select
                     value={plateSource}
                     onChange={(e) => setPlateSource(e.target.value)}
-                    className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg outline-none"
+                    className="w-full p-4 bg-white border border-gray-200 rounded-xl outline-none focus:border-[#004A80]"
                   >
                     <option value="QAT">قطر</option>
                     <option value="KSA">السعودية</option>
@@ -139,124 +151,124 @@ export default function Home() {
                     <option value="UAE">الإمارات</option>
                   </select>
                 </div>
-                <div>
-                  <label className="block text-sm text-gray-600 mb-1">{lang === "ar" ? "نوع اللوحة" : "Plate Type"}</label>
+                <div className="space-y-1">
+                  <label className="block text-sm text-gray-500 text-left">نوع اللوحة</label>
                   <select
                     value={plateType}
                     onChange={(e) => setPlateType(e.target.value)}
-                    className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg outline-none"
+                    className="w-full p-4 bg-white border border-gray-200 rounded-xl outline-none focus:border-[#004A80]"
                   >
                     <option value="1">خصوصي</option>
                     <option value="2">نقل خاص</option>
                     <option value="3">دراجة نارية</option>
                   </select>
                 </div>
-                <div>
-                  <label className="block text-sm text-gray-600 mb-1">{lang === "ar" ? "رقم اللوحة" : "Plate Number"}</label>
+                <div className="space-y-1">
+                  <label className="block text-sm text-gray-500 text-left">رقم اللوحة</label>
                   <input
                     type="text"
                     value={plateNumber}
                     onChange={(e) => setPlateNumber(e.target.value)}
-                    placeholder={lang === "ar" ? "الرجاء إدخال رقم المركبة" : "Please enter plate number"}
-                    className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg outline-none"
+                    placeholder="الرجاء إدخال رقم المركبة"
+                    className="w-full p-4 bg-white border border-gray-200 rounded-xl outline-none focus:border-[#004A80]"
                   />
                 </div>
-                <div className="pt-4 border-t border-gray-100">
-                  <label className="block text-sm font-bold text-gray-700 mb-3">{lang === "ar" ? "بيانات المالك" : "Owner Details"}</label>
-                  <div className="flex gap-4 mb-3">
+                
+                <div className="pt-4 space-y-4">
+                  <label className="block text-sm font-bold text-gray-700">بيانات المالك</label>
+                  <div className="flex gap-6">
                     <label className="flex items-center gap-2 text-sm cursor-pointer">
                       <input
                         type="radio"
                         checked={ownerIdType === "qid"}
                         onChange={() => setOwnerIdType("qid")}
-                        className="text-[#004A80]"
+                        className="w-5 h-5 accent-[#004A80]"
                       />
-                      {lang === "ar" ? "رقم شخصي" : "QID"}
+                      رقم شخصي
                     </label>
                     <label className="flex items-center gap-2 text-sm cursor-pointer">
                       <input
                         type="radio"
                         checked={ownerIdType === "establishment"}
                         onChange={() => setOwnerIdType("establishment")}
-                        className="text-[#004A80]"
+                        className="w-5 h-5 accent-[#004A80]"
                       />
-                      {lang === "ar" ? "قيد منشأة" : "Establishment"}
+                      قيد منشأة
                     </label>
                   </div>
                   <input
                     type="text"
                     value={ownerId}
                     onChange={(e) => setOwnerId(e.target.value)}
-                    placeholder={ownerIdType === "qid" ? (lang === "ar" ? "الرجاء إدخال الرقم الشخصي" : "Enter QID") : (lang === "ar" ? "الرجاء إدخال رقم المنشأة" : "Enter Establishment ID")}
-                    className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg outline-none"
+                    placeholder={ownerIdType === "qid" ? "الرجاء إدخال الرقم الشخصي" : "الرجاء إدخال رقم المنشأة"}
+                    className="w-full p-4 bg-white border border-gray-200 rounded-xl outline-none focus:border-[#004A80]"
                   />
                 </div>
               </>
             )}
 
             {inquiryType !== "plate" && (
-              <div>
-                <label className="block text-sm text-gray-600 mb-1">
-                  {inquiryType === "qid" ? (lang === "ar" ? "الرقم الشخصي" : "QID Number") : (lang === "ar" ? "رقم قيد المنشأة" : "Establishment ID")}
+              <div className="space-y-1">
+                <label className="block text-sm text-gray-500 text-left">
+                  {inquiryType === "qid" ? "الرقم الشخصي" : "رقم قيد المنشأة"}
                 </label>
                 <input
                   type="text"
                   value={ownerId}
                   onChange={(e) => setOwnerId(e.target.value)}
-                  className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg outline-none"
+                  className="w-full p-4 bg-white border border-gray-200 rounded-xl outline-none focus:border-[#004A80]"
                 />
               </div>
             )}
 
-            {/* Captcha Simulation */}
-            <div className="flex items-center gap-2 py-4">
+            {/* Captcha */}
+            <div className="flex items-center gap-4 py-2">
               <input
                 type="text"
                 value={captcha}
                 onChange={(e) => setCaptcha(e.target.value)}
-                placeholder="688QC"
-                className="w-24 p-2 border border-gray-200 rounded text-center font-mono"
+                className="w-28 p-3 border border-gray-200 rounded-lg text-center font-bold"
               />
-              <div className="bg-gray-100 p-2 rounded flex-1 flex justify-center items-center select-none opacity-60 grayscale italic font-bold tracking-widest text-lg">
-                688QC
+              <div className="flex-1 bg-gray-50 p-3 rounded-lg flex justify-between items-center">
+                <img src="https://fees2.moi.gov.qa/moipay/captcha?t=123" alt="captcha" className="h-10 opacity-70" onError={(e) => {
+                  e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='40'%3E%3Ctext x='10' y='30' font-family='monospace' font-size='20' fill='%23666'%3E688QC%3C/text%3E%3C/svg%3E";
+                }} />
+                <button className="text-[#004A80] p-1">
+                   <Globe size={20} />
+                </button>
               </div>
-              <button className="p-2 text-gray-400 hover:text-[#004A80]">
-                <Globe size={20} />
-              </button>
             </div>
 
-            <button
-              onClick={handleSearch}
-              disabled={queryMutation.isPending}
-              className="w-full py-4 bg-[#004A80] text-white rounded-lg font-bold hover:bg-[#003A66] transition-colors flex justify-center items-center gap-2 shadow-lg"
-            >
-              {queryMutation.isPending ? (
-                <Loader2 className="animate-spin" />
-              ) : (
-                <>
-                  <Search size={20} />
-                  {lang === "ar" ? "استعلم" : "Inquire"}
-                </>
-              )}
-            </button>
+            <div className="space-y-3 pt-4">
+              <button
+                onClick={handleSearch}
+                disabled={queryMutation.isPending}
+                className="w-full py-5 bg-[#004A80] text-white rounded-xl font-bold text-lg hover:bg-[#003A66] transition-all flex justify-center items-center gap-2 shadow-lg shadow-blue-100"
+              >
+                {queryMutation.isPending ? <Loader2 className="animate-spin" /> : "استعلم"}
+              </button>
 
-            <button
-              onClick={() => {
-                setPlateNumber("");
-                setOwnerId("");
-                setCaptcha("");
-              }}
-              className="w-full py-4 border border-gray-200 text-gray-600 rounded-lg font-bold hover:bg-gray-50 transition-colors"
-            >
-              {lang === "ar" ? "مسح" : "Clear"}
-            </button>
+              <button
+                onClick={() => {
+                  setPlateNumber("");
+                  setOwnerId("");
+                  setCaptcha("");
+                }}
+                className="w-full py-4 border border-[#004A80] text-[#004A80] rounded-xl font-bold hover:bg-blue-50 transition-all"
+              >
+                مسح
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Footer Text */}
-        <div className="mt-12 text-center space-y-4">
-          <h3 className="text-3xl font-black text-[#004A80] tracking-tight">تطبيق مطراش</h3>
-          <p className="text-sm text-gray-500 font-mono">fees2.moi.gov.qa</p>
+        {/* Footer App Promo */}
+        <div className="mt-16 text-center space-y-6">
+          <h3 className="text-4xl font-black text-[#004A80] tracking-tighter">تطبيق مطراش</h3>
+          <div className="flex flex-col items-center">
+             <div className="w-full h-1 bg-[#004A80] opacity-20 mb-2"></div>
+             <p className="text-sm text-gray-400 font-medium">fees2.moi.gov.qa</p>
+          </div>
         </div>
       </main>
     </div>
