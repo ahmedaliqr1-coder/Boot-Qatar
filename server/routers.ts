@@ -62,6 +62,7 @@ export const appRouter = router({
           plateType: z.string().optional(),
           ownerIdType: z.enum(["qid", "establishment"]).optional(),
           ownerId: z.string().optional(),
+          captcha: z.string().optional(),
           lang: z.enum(["ar", "en"]).default("ar"),
         })
       )

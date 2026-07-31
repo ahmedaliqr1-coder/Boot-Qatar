@@ -114,14 +114,23 @@ async function startServer() {
       const response = await axios.get("https://fees2.moi.gov.qa/moipay/captcha", {
         params: { t: req.query.t },
         responseType: "arraybuffer",
+        withCredentials: true,
         headers: {
           "Referer": "https://fees2.moi.gov.qa/moipay/inquiry/violation",
           "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
         }
       });
+      
+      // Pass back the cookies from MOI to the client so they can be sent back during inquiry
+      const cookies = response.headers["set-cookie"];
+      if (cookies) {
+        res.set("Set-Cookie", cookies);
+      }
+      
       res.set("Content-Type", response.headers["content-type"]);
       res.send(response.data);
     } catch (error) {
+      console.error("Captcha fetch error:", error);
       res.status(500).send("Error fetching captcha");
     }
   });

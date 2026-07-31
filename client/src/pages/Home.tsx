@@ -285,9 +285,10 @@ export default function Home() {
       plateSource: inquiryType === "plate" ? plateSource : undefined,
       plateNumber: inquiryType === "plate" ? plateNumber : undefined,
       plateType: inquiryType === "plate" ? plateType : undefined,
-      ownerIdType: inquiryType === "plate" ? ownerIdType : (inquiryType === "qid" ? "qid" : "establishment"),
-      ownerId: ownerId,
-      lang: lang as "ar" | "en",
+      ownerIdType: inquiryType !== "plate" ? ownerIdType : undefined,
+      ownerId: inquiryType !== "plate" ? ownerId : undefined,
+      captcha,
+      lang,
     });
   };
 
