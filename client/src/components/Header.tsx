@@ -7,36 +7,36 @@ export function Header() {
 
   return (
     <header className="bg-white border-b border-gray-100 w-full sticky top-0 z-50 shadow-sm overflow-hidden">
-      {/* Main Header Row - Optimized for Mobile to prevent overflow */}
-      <div className="max-w-4xl mx-auto px-3 py-2 flex items-center justify-between gap-2" dir={isAr ? "rtl" : "ltr"}>
+      {/* Main Header Row - Optimized for all mobile screens */}
+      <div className="max-w-4xl mx-auto px-2 sm:px-4 py-1.5 flex items-center justify-between gap-1 sm:gap-4" dir={isAr ? "rtl" : "ltr"}>
         
-        {/* MOI Emblem - Reduced size to fit next to text on mobile */}
+        {/* MOI Emblem - Scaled for mobile */}
         <div className="flex items-center flex-shrink-0">
           <img 
             src="/qatar-moi-logo-new.png" 
             alt="MOI Logo" 
-            className="h-12 sm:h-16 w-auto object-contain"
+            className="h-12 xs:h-14 sm:h-16 w-auto object-contain"
           />
         </div>
 
-        {/* Vertical Line and Payment Gateway - Compact for mobile */}
-        <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+        {/* Vertical Line and Payment Gateway - More compact for mobile */}
+        <div className="flex items-center gap-1.5 sm:gap-3 flex-shrink min-w-0">
           {/* Vertical Divider - maroon color */}
-          <div className="h-8 sm:h-10 w-[1.5px] bg-[#8A1538]"></div>
+          <div className="h-7 sm:h-10 w-[1.5px] bg-[#8A1538] flex-shrink-0"></div>
           
-          {/* Payment Gateway Text */}
-          <div className={`flex flex-col ${isAr ? "items-end" : "items-start"}`}>
-            <span className="text-[14px] sm:text-[18px] font-bold text-[#8A1538] leading-tight whitespace-nowrap">
+          {/* Payment Gateway Text - Responsive font sizes */}
+          <div className={`flex flex-col ${isAr ? "items-end" : "items-start"} min-w-0 overflow-hidden`}>
+            <span className="text-[13px] xs:text-[15px] sm:text-[18px] font-bold text-[#8A1538] leading-tight whitespace-nowrap truncate">
               {isAr ? "بوابة الدفع" : "Payment Gateway"}
             </span>
-            <span className="text-[10px] sm:text-[12px] font-medium text-black leading-tight whitespace-nowrap">
+            <span className="text-[9px] xs:text-[10px] sm:text-[12px] font-medium text-black leading-tight whitespace-nowrap truncate">
               {isAr ? "Payment Gateway" : "بوابة الدفع"}
             </span>
           </div>
         </div>
       </div>
       
-      {/* Sub-header for Language */}
+      {/* Sub-header for Language - Slimmer for mobile */}
       <div className="bg-white border-y border-gray-100 w-full py-1">
         <div className="max-w-4xl mx-auto px-3 flex justify-between items-center" dir={isAr ? "rtl" : "ltr"}>
           <button 
