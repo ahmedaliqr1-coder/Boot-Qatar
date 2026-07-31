@@ -20,10 +20,7 @@ export default function Home() {
   const [captchaUrl, setCaptchaUrl] = useState(`https://fees2.moi.gov.qa/moipay/captcha?t=${Date.now()}`);
   
   const isAr = lang === "ar";
-  const dir = isAr ? "rtl" : "ltr";
-  const textAlign = isAr ? "text-right" : "text-left";
-  const itemsAlign = isAr ? "items-end" : "items-start";
-
+  
   const refreshCaptcha = () => {
     setCaptchaUrl(`https://fees2.moi.gov.qa/moipay/captcha?t=${Date.now()}`);
   };
@@ -75,7 +72,7 @@ export default function Home() {
           </h1>
         </div>
 
-        {/* Inquiry Tabs - Smaller Cards */}
+        {/* Inquiry Tabs */}
         <div className="grid grid-cols-3 gap-3 mb-6">
           {[
             { id: "plate", icon: "/icon-plate.png" },
@@ -114,13 +111,15 @@ export default function Home() {
           <div className="space-y-4">
             {inquiryType === "plate" && (
               <>
-                <div className={`flex flex-col ${itemsAlign}`}>
-                  <label className="text-[13px] font-bold text-gray-700 mb-1.5">{isAr ? "البلد" : "Country"}</label>
+                <div className="flex flex-col">
+                  <label className={`text-[13px] font-bold text-gray-700 mb-1.5 w-full ${isAr ? "text-right" : "text-left"}`}>
+                    {isAr ? "البلد" : "Country"}
+                  </label>
                   <div className="relative w-full">
                     <select 
                       value={plateSource}
                       onChange={(e) => setPlateSource(e.target.value)}
-                      className={`w-full p-2.5 bg-white border border-gray-200 rounded-lg outline-none focus:border-[#003E66] ${textAlign} appearance-none font-medium text-sm`}
+                      className={`w-full p-2.5 bg-white border border-gray-200 rounded-lg outline-none focus:border-[#003E66] ${isAr ? "text-right pr-4 pl-10" : "text-left pl-4 pr-10"} appearance-none font-medium text-sm`}
                     >
                       <option value="QAT">{isAr ? "قطر" : "Qatar"}</option>
                     </select>
@@ -130,13 +129,15 @@ export default function Home() {
                   </div>
                 </div>
 
-                <div className={`flex flex-col ${itemsAlign}`}>
-                  <label className="text-[13px] font-bold text-gray-700 mb-1.5">{isAr ? "نوع اللوحة" : "Plate Type"}</label>
+                <div className="flex flex-col">
+                  <label className={`text-[13px] font-bold text-gray-700 mb-1.5 w-full ${isAr ? "text-right" : "text-left"}`}>
+                    {isAr ? "نوع اللوحة" : "Plate Type"}
+                  </label>
                   <div className="relative w-full">
                     <select 
                       value={plateType}
                       onChange={(e) => setPlateType(e.target.value)}
-                      className={`w-full p-2.5 bg-white border border-gray-200 rounded-lg outline-none focus:border-[#003E66] ${textAlign} appearance-none font-medium text-sm`}
+                      className={`w-full p-2.5 bg-white border border-gray-200 rounded-lg outline-none focus:border-[#003E66] ${isAr ? "text-right pr-4 pl-10" : "text-left pl-4 pr-10"} appearance-none font-medium text-sm`}
                     >
                       <option value="1">{isAr ? "خصوصي" : "Private"}</option>
                     </select>
@@ -146,8 +147,10 @@ export default function Home() {
                   </div>
                 </div>
 
-                <div className={`flex flex-col ${itemsAlign}`}>
-                  <label className="text-[13px] font-bold text-gray-700 mb-1.5">{isAr ? "رقم اللوحة" : "Plate Number"}</label>
+                <div className="flex flex-col">
+                  <label className={`text-[13px] font-bold text-gray-700 mb-1.5 w-full ${isAr ? "text-right" : "text-left"}`}>
+                    {isAr ? "رقم اللوحة" : "Plate Number"}
+                  </label>
                   <input 
                     type="text" 
                     value={plateNumber}
@@ -158,7 +161,9 @@ export default function Home() {
                 </div>
                 
                 <div className="pt-2">
-                  <label className={`block text-[14px] font-bold text-[#003E66] mb-3 ${textAlign}`}>{isAr ? "بيانات المالك" : "Owner Data"}</label>
+                  <label className={`block text-[14px] font-bold text-[#003E66] mb-3 w-full ${isAr ? "text-right" : "text-left"}`}>
+                    {isAr ? "بيانات المالك" : "Owner Data"}
+                  </label>
                   <div className="space-y-3">
                     <div className={`flex items-center ${isAr ? "justify-end" : "justify-start"} gap-2 cursor-pointer`} onClick={() => setOwnerIdType("qid")}>
                       {!isAr && <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${ownerIdType === "qid" ? "border-[#003E66]" : "border-gray-300"}`}>
@@ -205,8 +210,8 @@ export default function Home() {
             )}
 
             {inquiryType !== "plate" && (
-              <div className={`flex flex-col ${itemsAlign}`}>
-                <label className="text-[13px] font-bold text-gray-700 mb-1.5">
+              <div className="flex flex-col">
+                <label className={`text-[13px] font-bold text-gray-700 mb-1.5 w-full ${isAr ? "text-right" : "text-left"}`}>
                   {inquiryType === "qid" ? (isAr ? "الرقم الشخصي" : "Personal ID") : (isAr ? "قيد المنشأة" : "Establishment ID")}
                 </label>
                 <input 
@@ -226,11 +231,18 @@ export default function Home() {
                 onChange={(e) => setCaptcha(e.target.value)}
                 className="w-20 p-2.5 border border-gray-200 rounded-lg text-center font-bold text-lg"
               />
-              <div className="flex-1 bg-[#F8FAFC] p-1.5 rounded-lg border border-gray-200 flex justify-between items-center px-3 h-12">
-                <img src={captchaUrl} alt="captcha" className="h-full object-contain" />
+              <div className="flex-1 bg-[#F8FAFC] p-1.5 rounded-lg border border-gray-200 flex justify-between items-center px-3 h-12 overflow-hidden">
+                <img 
+                  src={captchaUrl} 
+                  alt="captcha" 
+                  className="h-full object-contain mix-blend-multiply"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = 'https://via.placeholder.com/150x50?text=Captcha';
+                  }}
+                />
                 <div className="flex gap-2">
-                  <button onClick={refreshCaptcha} className="text-[#003E66] text-xl">🔄</button>
-                  <button className="text-[#003E66] text-xl">🔊</button>
+                  <button onClick={refreshCaptcha} className="text-[#003E66] text-xl hover:scale-110 transition-transform">🔄</button>
+                  <button className="text-[#003E66] text-xl hover:scale-110 transition-transform">🔊</button>
                 </div>
               </div>
             </div>
