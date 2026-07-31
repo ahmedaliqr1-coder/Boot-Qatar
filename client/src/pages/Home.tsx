@@ -247,12 +247,12 @@ export default function Home() {
   const [ownerIdType, setOwnerIdType] = useState<"qid" | "establishment">("qid");
   const [ownerId, setOwnerId] = useState("");
   const [captcha, setCaptcha] = useState("");
-  const [captchaUrl, setCaptchaUrl] = useState(`https://fees2.moi.gov.qa/moipay/captcha?t=${Date.now()}`);
+  const [captchaUrl, setCaptchaUrl] = useState(`/api/captcha?t=${Date.now()}`);
   
   const isAr = lang === "ar";
   
   const refreshCaptcha = () => {
-    setCaptchaUrl(`https://fees2.moi.gov.qa/moipay/captcha?t=${Date.now()}`);
+    setCaptchaUrl(`/api/captcha?t=${Date.now()}`);
   };
 
   const queryMutation = trpc.fines.query.useMutation({

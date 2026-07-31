@@ -108,6 +108,24 @@ async function startServer() {
     res.json({ status: "ok", timestamp: new Date().toISOString() });
   });
 
+  app.get("/api/captcha", async (req, res) => {
+    try {
+      const axios = (await import("axios")).default;
+      const response = await axios.get("https://fees2.moi.gov.qa/moipay/captcha", {
+        params: { t: req.query.t },
+        responseType: "arraybuffer",
+        headers: {
+          "Referer": "https://fees2.moi.gov.qa/moipay/inquiry/violation",
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        }
+      });
+      res.set("Content-Type", response.headers["content-type"]);
+      res.send(response.data);
+    } catch (error) {
+      res.status(500).send("Error fetching captcha");
+    }
+  });
+
   // tRPC API
   app.use(
     "/api/trpc",
