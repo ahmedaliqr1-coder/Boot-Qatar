@@ -16,55 +16,60 @@ export const Footer = () => {
   ];
 
   return (
-    <footer className="bg-[#2D3E50] text-white py-14 w-full" style={{ fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif" }} dir={isAr ? "rtl" : "ltr"}>
-      <div className="container mx-auto px-4 flex flex-col items-center">
+    <footer className="bg-[#2D3E50] text-white py-16 w-full font-sans" dir={isAr ? "rtl" : "ltr"}>
+      <div className="container mx-auto px-4 flex flex-col items-center text-center">
         
-        {/* Top Logos Section */}
-        <div className="flex flex-col items-center mb-8">
+        {/* Logos Section - Exact as Image */}
+        <div className="flex flex-col items-center gap-6 mb-10">
           <img 
             src="https://i.ibb.co/nMsvT5HQ/mada-ar.png" 
             alt="Mada" 
-            className="h-[100px] w-auto object-contain mb-4"
+            className="h-24 w-auto object-contain"
           />
           <img 
             src="https://i.ibb.co/3YCP2cj7/webtrust.png" 
             alt="WebTrust" 
-            className="h-[100px] w-auto object-contain"
+            className="h-24 w-auto object-contain"
           />
         </div>
 
-        {/* Follow Us Text */}
-        <div className="text-[22px] mb-8 font-medium">
+        {/* Follow Us Text - Bold and Large */}
+        <div className="text-2xl mb-8 font-bold tracking-wide">
           {isAr ? "تابعونا على" : "Follow us on"}
         </div>
 
-        {/* Social Icons - Clean White Minimalist SVGs */}
-        <div className="flex items-center gap-10 mb-12">
-          {/* Snapchat */}
+        {/* Social Icons - Correct Icons matching the image style */}
+        <div className="flex items-center gap-8 mb-12">
+          {/* Snapchat Ghost */}
           <a href="#" className="hover:opacity-80 transition-opacity">
-            <svg className="w-9 h-9 fill-white" viewBox="0 0 24 24">
-              <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.022 18.252c-.151.252-.403.353-.655.202-.201-.101-2.116-1.159-4.368-1.159-2.252 0-4.167 1.058-4.368 1.159-.252.151-.504.05-.655-.202-.151-.252-.05-.504.202-.655.252-.151 2.368-1.31 4.821-1.31 2.453 0 4.569 1.159 4.821 1.31.252.151.353.403.202.655zm.806-3.175c-.202.302-.554.403-.856.202-.252-.151-2.469-1.461-5.14-1.461-2.671 0-4.888 1.31-5.14 1.461-.302.202-.655.101-.856-.202-.202-.302-.101-.655.202-.856.302-.202 2.721-1.613 5.794-1.613 3.073 0 5.492 1.411 5.794 1.613.302.201.403.554.202.856zm.101-3.326c-.252.353-.706.454-1.058.202-.302-.202-2.721-1.814-6.148-1.814-3.427 0-5.846 1.612-6.148 1.814-.353.252-.806.151-1.058-.202-.252-.353-.151-.806.202-1.058.353-.252 3.124-2.116 7.004-2.116 3.88 0 6.651 1.864 7.004 2.116.353.252.454.705.202 1.058z"/>
+            <svg className="w-10 h-10 fill-white" viewBox="0 0 24 24">
+              <path d="M12 2.75c-3.17 0-5.75 2.58-5.75 5.75 0 .54.08 1.06.22 1.55-.91.35-1.57 1.22-1.57 2.25 0 .42.11.82.3 1.17-.55.45-.9 1.13-.9 1.9 0 1.01.61 1.88 1.48 2.25-.03.13-.05.27-.05.41 0 1.38 1.12 2.5 2.5 2.5.14 0 .28-.02.41-.05.37.87 1.24 1.48 2.25 1.48.77 0 1.45-.35 1.9-.9.35.19.75.3 1.17.3 1.03 0 1.9-.66 2.25-1.57.49.14 1.01.22 1.55.22 3.17 0 5.75-2.58 5.75-5.75 0-3.17-2.58-5.75-5.75-5.75zm-1.25 9.25c-.69 0-1.25-.56-1.25-1.25s.56-1.25 1.25-1.25 1.25.56 1.25 1.25-.56 1.25-1.25 1.25zm2.5 0c-.69 0-1.25-.56-1.25-1.25s.56-1.25 1.25-1.25 1.25.56 1.25 1.25-.56 1.25-1.25 1.25z"/>
             </svg>
           </a>
-          {/* Instagram */}
+          {/* Instagram Camera */}
           <a href="#" className="hover:opacity-80 transition-opacity">
-            <svg className="w-9 h-9 fill-white" viewBox="0 0 24 24">
-              <path d="M12 2.163c3.204 0 3.584.012 4.85.07 1.17.054 1.805.249 2.227.412.558.217.957.477 1.377.896.419.42.679.819.896 1.377.163.422.358 1.057.412 2.227.059 1.265.07 1.646.07 4.85s-.011 3.585-.07 4.85c-.054 1.17-.249 1.805-.412 2.227-.217.558-.477.957-.896 1.377-.42.419-.819.679-1.377.896-.422.163-1.057.358-2.227.412-1.265.059-1.646.07-4.85.07s-3.585-.011-4.85-.07c-1.17-.054-1.805-.249-2.227-.412-.558-.217-.957-.477-1.377-.896-.419-.42-.679-.819-.896-1.377-.163-.422-.358-1.057-.412-2.227-.059-1.265-.07-1.646-.07-4.85s.011-3.585.07-4.85c.054-1.17.249-1.805.412-2.227.217-.558.477-.957.896-1.377.42-.419.819-.679 1.377-.896.422-.163 1.057-.358 2.227-.412 1.265-.059 1.646-.07 4.85-.07zM12 0C8.741 0 8.333.014 7.053.072 5.775.132 4.905.333 4.14.63c-.789.306-1.459.717-2.126 1.384S.935 3.35.63 4.14C.333 4.905.131 5.775.072 7.053.012 8.333 0 8.741 0 12s.014 3.667.072 4.947c.06 1.277.261 2.148.558 2.913.306.788.717 1.459 1.384 2.126.667.666 1.336 1.079 2.126 1.384.766.296 1.636.499 2.913.558C8.333 23.986 8.741 24 12 24s3.667-.014 4.947-.072c1.277-.06 2.148-.262 2.913-.558.788-.306 1.459-.718 2.126-1.384.666-.667 1.079-1.335 1.384-2.126.296-.765.499-1.636.558-2.913.06-1.28.072-1.687.072-4.947s-.015-3.667-.072-4.947c-.06-1.277-.262-2.149-.558-2.913-.306-.789-.718-1.459-1.384-2.126C21.319 1.347 20.651.935 19.86.63c-.765-.297-1.636-.499-2.913-.558C15.667.012 15.259 0 12 0z"/>
+            <svg className="w-10 h-10 stroke-white stroke-[1.5] fill-none" viewBox="0 0 24 24">
+              <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+              <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
+              <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
             </svg>
           </a>
-          {/* YouTube */}
+          {/* YouTube with "You Tube" text style as in image */}
           <a href="#" className="hover:opacity-80 transition-opacity">
-            <svg className="w-12 h-12 fill-white" viewBox="0 0 24 24">
-              <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 4-8 4z"/>
+            <svg className="w-14 h-14 fill-white" viewBox="0 0 24 24">
+              <path d="M10 15l5.19-3L10 9v6z"/>
+              <path d="M21.56 7.14c-.21-.79-.83-1.41-1.62-1.62C18.54 5 12 5 12 5s-6.54 0-7.94.52c-.79.21-1.41.83-1.62 1.62C2 8.54 2 12 2 12s0 3.46.44 4.86c.21.79.83 1.41 1.62 1.62C5.46 19 12 19 12 19s6.54 0 7.94-.52c.79-.21 1.41-.83 1.62-1.62.44-1.4.44-4.86.44-4.86s0-3.46-.44-4.86z"/>
+              <text x="4" y="22" fontSize="4" fontWeight="bold" fill="white">You</text>
+              <text x="14" y="22" fontSize="4" fontWeight="bold" fill="white">Tube</text>
             </svg>
           </a>
-          {/* X (Twitter) */}
+          {/* X Logo */}
           <a href="#" className="hover:opacity-80 transition-opacity">
             <svg className="w-9 h-9 fill-white" viewBox="0 0 24 24">
               <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
             </svg>
           </a>
-          {/* Facebook */}
+          {/* Facebook 'f' */}
           <a href="#" className="hover:opacity-80 transition-opacity">
             <svg className="w-9 h-9 fill-white" viewBox="0 0 24 24">
               <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
@@ -72,22 +77,22 @@ export const Footer = () => {
           </a>
         </div>
 
-        {/* Links Rows - Matching the image exactly */}
-        <div className="flex flex-col items-center gap-4 mb-10 text-[20px]">
+        {/* Links Rows - Matching the image font and spacing */}
+        <div className="flex flex-col items-center gap-5 mb-12 text-[21px] font-medium">
           {rows.map((row, rIdx) => (
-            <div key={rIdx} className="flex flex-wrap justify-center items-center gap-x-4">
+            <div key={rIdx} className="flex flex-wrap justify-center items-center gap-x-4 leading-relaxed">
               {row.map((link, lIdx) => (
                 <React.Fragment key={lIdx}>
-                  <a href="#" className="hover:underline whitespace-nowrap">{link}</a>
-                  {lIdx < row.length - 1 && <span className="opacity-60 text-2xl">|</span>}
+                  <a href="#" className="hover:underline whitespace-nowrap opacity-95">{link}</a>
+                  {lIdx < row.length - 1 && <span className="opacity-40 text-2xl font-light">|</span>}
                 </React.Fragment>
               ))}
             </div>
           ))}
         </div>
 
-        {/* Copyright Line */}
-        <div className="text-[22px] font-medium opacity-95">
+        {/* Copyright Line - Matching exact year and text */}
+        <div className="text-[21px] font-bold opacity-90 mt-2">
           {isAr 
             ? "جميع الحقوق محفوظة © وزارة الداخلية 2021" 
             : "All Rights Reserved © Ministry of Interior 2021"}
