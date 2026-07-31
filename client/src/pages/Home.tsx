@@ -64,7 +64,7 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-[#E9F1F4]" dir={dir}>
+    <div className="min-h-screen bg-[#E9F1F4]" dir={isAr ? "rtl" : "ltr"}>
       <Header />
 
       <main className="max-w-lg mx-auto px-4 py-6">
