@@ -14,30 +14,17 @@ export function Header() {
           </span>
         </div>
 
-        {/* Middle-Right Section: Vertical Line and MOI Text */}
-        <div className="flex items-center gap-6 flex-1 justify-end">
+        {/* Right Section: Vertical Line and MOI Emblem (Text Removed) */}
+        <div className="flex items-center gap-6">
           {/* Vertical Divider */}
           <div className="h-14 w-[1.5px] bg-[#8A1538]"></div>
           
-          {/* MOI Text */}
-          <div className="flex flex-col items-end">
-            <span className="text-[22px] font-bold text-[#003E66] leading-tight whitespace-nowrap">
-              وزارة الداخلية
-            </span>
-            <span className="text-[16px] font-medium text-[#003E66] leading-tight whitespace-nowrap">
-              Ministry of Interior
-            </span>
-            <span className="text-[13px] font-medium text-gray-500 leading-tight whitespace-nowrap">
-              State of Qatar • دولة قطر
-            </span>
-          </div>
-
-          {/* Right Section: MOI Emblem */}
-          <div className="flex items-center ml-2">
+          {/* MOI Emblem replaces the text */}
+          <div className="flex items-center">
             <img 
               src="/qatar-moi-logo-final.png" 
               alt="MOI Logo" 
-              className="h-24 w-auto object-contain"
+              className="h-28 w-auto object-contain"
             />
           </div>
         </div>
