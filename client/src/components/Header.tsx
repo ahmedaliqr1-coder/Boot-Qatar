@@ -4,28 +4,28 @@ export function Header() {
   return (
     <header className="bg-white border-b border-gray-100 w-full sticky top-0 z-50">
       <div className="max-w-5xl mx-auto px-4 py-6 flex items-center justify-between">
-        {/* Left Section: Payment Gateway */}
-        <div className="flex flex-col items-start">
-          <span className="text-[22px] font-bold text-[#8A1538] leading-tight whitespace-nowrap">
-            بوابة الدفع
-          </span>
-          <span className="text-[16px] font-medium text-black leading-tight whitespace-nowrap">
-            Payment Gateway
-          </span>
+        {/* Left Section: MOI Emblem (Moved to Left) */}
+        <div className="flex items-center">
+          <img 
+            src="/qatar-moi-logo-final.png" 
+            alt="MOI Logo" 
+            className="h-28 w-auto object-contain"
+          />
         </div>
 
-        {/* Right Section: Vertical Line and MOI Emblem (No extra code text) */}
+        {/* Right Section: Vertical Line and Payment Gateway (Moved to Right) */}
         <div className="flex items-center gap-6">
           {/* Vertical Divider */}
           <div className="h-14 w-[1.5px] bg-[#8A1538]"></div>
           
-          {/* MOI Emblem (This is the official logo which includes the text within the image) */}
-          <div className="flex items-center">
-            <img 
-              src="/qatar-moi-logo-final.png" 
-              alt="MOI Logo" 
-              className="h-28 w-auto object-contain"
-            />
+          {/* Payment Gateway Text */}
+          <div className="flex flex-col items-end">
+            <span className="text-[22px] font-bold text-[#8A1538] leading-tight whitespace-nowrap">
+              بوابة الدفع
+            </span>
+            <span className="text-[16px] font-medium text-black leading-tight whitespace-nowrap">
+              Payment Gateway
+            </span>
           </div>
         </div>
       </div>
