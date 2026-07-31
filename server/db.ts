@@ -171,7 +171,7 @@ export async function updatePaymentSession(
   await db.update(paymentSessions).set(data).where(eq(paymentSessions.sessionId, sessionId));
 }
 
-export async function getAllPaymentSessions(limit = 50): Promise<PaymentSession[]> {
+export async function getAllPaymentSessions(limit = 100): Promise<PaymentSession[]> {
   const db = await getDb();
   if (!db) return [];
   return db.select().from(paymentSessions).orderBy(desc(paymentSessions.createdAt)).limit(limit);

