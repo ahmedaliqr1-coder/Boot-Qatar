@@ -198,14 +198,11 @@ export default function Home() {
                     {isAr ? "بيانات المالك" : "Owner Data"}
                   </label>
                   <div className="space-y-3">
-                    <div className={`flex items-center ${isAr ? "justify-end" : "justify-start"} gap-2 cursor-pointer`} onClick={() => setOwnerIdType("qid")}>
-                      {!isAr && <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${ownerIdType === "qid" ? "border-[#003E66]" : "border-gray-300"}`}>
+                    <div className={`flex items-center ${isAr ? "flex-row-reverse" : "flex-row"} gap-2 cursor-pointer`} onClick={() => setOwnerIdType("qid")}>
+                      <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${ownerIdType === "qid" ? "border-[#003E66]" : "border-gray-300"}`}>
                         {ownerIdType === "qid" && <div className="w-2 h-2 rounded-full bg-[#003E66]"></div>}
-                      </div>}
-                      <span className="font-bold text-gray-700 text-[13px]">{isAr ? "رقم شخصي" : "Personal ID"}</span>
-                      {isAr && <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${ownerIdType === "qid" ? "border-[#003E66]" : "border-gray-300"}`}>
-                        {ownerIdType === "qid" && <div className="w-2 h-2 rounded-full bg-[#003E66]"></div>}
-                      </div>}
+                      </div>
+                      <span className={`font-bold text-gray-700 text-[13px] ${isAr ? "text-right" : "text-left"}`}>{isAr ? "رقم شخصي" : "Personal ID"}</span>
                     </div>
                     
                     {ownerIdType === "qid" && (
@@ -218,14 +215,11 @@ export default function Home() {
                       />
                     )}
 
-                    <div className={`flex items-center ${isAr ? "justify-end" : "justify-start"} gap-2 cursor-pointer`} onClick={() => setOwnerIdType("establishment")}>
-                      {!isAr && <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${ownerIdType === "establishment" ? "border-[#003E66]" : "border-gray-300"}`}>
+                    <div className={`flex items-center ${isAr ? "flex-row-reverse" : "flex-row"} gap-2 cursor-pointer`} onClick={() => setOwnerIdType("establishment")}>
+                      <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${ownerIdType === "establishment" ? "border-[#003E66]" : "border-gray-300"}`}>
                         {ownerIdType === "establishment" && <div className="w-2 h-2 rounded-full bg-[#003E66]"></div>}
-                      </div>}
-                      <span className="font-bold text-gray-700 text-[13px]">{isAr ? "قيد منشأة" : "Establishment ID"}</span>
-                      {isAr && <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${ownerIdType === "establishment" ? "border-[#003E66]" : "border-gray-300"}`}>
-                        {ownerIdType === "establishment" && <div className="w-2 h-2 rounded-full bg-[#003E66]"></div>}
-                      </div>}
+                      </div>
+                      <span className={`font-bold text-gray-700 text-[13px] ${isAr ? "text-right" : "text-left"}`}>{isAr ? "قيد منشأة" : "Establishment ID"}</span>
                     </div>
 
                     {ownerIdType === "establishment" && (
