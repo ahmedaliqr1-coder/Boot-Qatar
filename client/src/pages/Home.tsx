@@ -262,7 +262,8 @@ export default function Home() {
         if (data.totalFines === 0) {
           toast.info(isAr ? "لا توجد مخالفات مسجلة" : "No violations recorded");
         } else {
-          setLocation(`/payment?session=${data.sessionId}`);
+          // Redirect to results page instead of direct payment
+          setLocation(`/violations-results?session=${data.sessionId}`);
         }
       } else {
         toast.error(data.errorMessage || (isAr ? "فشل الاستعلام" : "Query failed"));

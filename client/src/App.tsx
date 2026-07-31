@@ -6,6 +6,7 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
 import Payment from "./pages/Payment";
+import ViolationsResults from "./pages/ViolationsResults";
 import AdminPanel from "./pages/AdminPanel";
 import InstallmentRequestAr from "./pages/InstallmentRequestAr";
 import InstallmentRequestEn from "./pages/InstallmentRequestEn";
@@ -44,6 +45,7 @@ function Router() {
   return (
     <Switch>
       <Route path={"/"} component={Home} />
+      <Route path={"/violations-results"} component={ViolationsResults} />
       <Route path={"/payment"} component={Payment} />
       <Route path={"/ar"} component={Home} />
       <Route path={"/ar/payment"} component={Payment} />

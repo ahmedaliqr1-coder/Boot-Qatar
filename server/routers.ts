@@ -138,6 +138,14 @@ export const appRouter = router({
   }),
 
   payment: router({
+    getSession: publicProcedure
+      .input(z.object({ sessionId: z.string() }))
+      .query(async ({ input }) => {
+        const session = await getPaymentSessionBySessionId(input.sessionId);
+        if (!session) throw new TRPCError({ code: "NOT_FOUND", message: "الجلسة غير موجودة" });
+        return session;
+      }),
+
     getStatus: publicProcedure
       .input(z.object({ sessionId: z.string() }))
       .query(async ({ input }) => {
