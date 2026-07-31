@@ -3,7 +3,6 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useLocation } from "wouter";
 import { useTranslation } from "@/hooks/useTranslation";
 import { Header } from "@/components/Header";
-import { CarIcon, PersonIcon, BuildingIcon } from "@/components/Icons";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 
@@ -77,14 +76,13 @@ export default function Home() {
           </h1>
         </div>
 
-        {/* Inquiry Tabs */}
+        {/* Inquiry Tabs with Transparent Images */}
         <div className="grid grid-cols-3 gap-4 mb-8">
           {[
-            { id: "plate", label: lang === "ar" ? "رقم المركبة" : "Plate Number", icon: CarIcon },
-            { id: "qid", label: lang === "ar" ? "الرقم الشخصي" : "Personal ID", icon: PersonIcon },
-            { id: "establishment", label: lang === "ar" ? "قيد المنشأة" : "Establishment ID", icon: BuildingIcon }
+            { id: "plate", label: lang === "ar" ? "رقم المركبة" : "Plate Number", icon: "/icon-plate.png" },
+            { id: "qid", label: lang === "ar" ? "الرقم الشخصي" : "الرقم الشخصي", icon: "/icon-qid.png" },
+            { id: "establishment", label: lang === "ar" ? "قيد المنشأة" : "Establishment ID", icon: "/icon-establishment.png" }
           ].map((tab) => {
-            const IconComponent = tab.icon;
             const isActive = inquiryType === tab.id;
             return (
               <button
@@ -94,7 +92,13 @@ export default function Home() {
                   isActive ? "border-[#003E66] shadow-md" : "border-transparent shadow-sm"
                 }`}
               >
-                <IconComponent active={isActive} />
+                <div className="w-16 h-16 flex items-center justify-center">
+                  <img 
+                    src={tab.icon} 
+                    alt={tab.label} 
+                    className={`max-w-full max-h-full object-contain ${isActive ? "" : "opacity-60 grayscale"}`}
+                  />
+                </div>
                 <span className={`text-sm font-bold mt-2 ${isActive ? "text-[#003E66]" : "text-gray-500"}`}>
                   {tab.label}
                 </span>
