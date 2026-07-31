@@ -12,7 +12,7 @@ export function Header() {
         {/* MOI Emblem - Large size but within a slim container */}
         <div className="flex items-center py-1">
           <img 
-            src="/qatar-moi-logo-final.png" 
+            src="/qatar-moi-logo-new.png" 
             alt="MOI Logo" 
             className="h-20 w-auto object-contain transform scale-110 origin-center"
           />
