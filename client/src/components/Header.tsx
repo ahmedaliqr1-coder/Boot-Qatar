@@ -2,35 +2,48 @@ import React from "react";
 
 export function Header() {
   return (
-    <header className="bg-[#F8FAFC] w-full">
-      <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
-        {/* Left: Payment Gateway Text */}
+    <header className="bg-white border-b border-gray-100 w-full">
+      <div className="max-w-5xl mx-auto px-4 py-6 flex items-center justify-between">
+        {/* Left Section: Payment Gateway */}
         <div className="flex flex-col items-start">
-          <span className="text-[20px] font-bold text-black leading-tight">بوابة الدفع</span>
-          <span className="text-[16px] font-medium text-black leading-tight">Payment Gateway</span>
+          <span className="text-[22px] font-bold text-[#8A1538] leading-tight whitespace-nowrap">
+            بوابة الدفع
+          </span>
+          <span className="text-[16px] font-medium text-black leading-tight whitespace-nowrap">
+            Payment Gateway
+          </span>
         </div>
 
-        {/* Center: MOI Emblem (Larger and Centered) */}
-        <div className="flex-1 flex justify-center px-4">
-          <img 
-            src="/qatar-moi-logo-final.png" 
-            alt="MOI Logo" 
-            className="h-24 w-auto object-contain"
-          />
-        </div>
-
-        {/* Right: Ministry of Interior Text with Vertical Line */}
-        <div className="flex items-center gap-4">
-          <div className="h-12 w-[1.5px] bg-[#8A1538]"></div>
+        {/* Middle-Right Section: Vertical Line and MOI Text */}
+        <div className="flex items-center gap-6 flex-1 justify-end">
+          {/* Vertical Divider */}
+          <div className="h-14 w-[1.5px] bg-[#8A1538]"></div>
+          
+          {/* MOI Text */}
           <div className="flex flex-col items-end">
-            <span className="text-[20px] font-bold text-black leading-tight">وزارة الداخلية</span>
-            <span className="text-[16px] font-medium text-black leading-tight">Ministry of Interior</span>
-            <span className="text-[12px] font-medium text-gray-500 leading-tight">State of Qatar • دولة قطر</span>
+            <span className="text-[22px] font-bold text-[#003E66] leading-tight whitespace-nowrap">
+              وزارة الداخلية
+            </span>
+            <span className="text-[16px] font-medium text-[#003E66] leading-tight whitespace-nowrap">
+              Ministry of Interior
+            </span>
+            <span className="text-[13px] font-medium text-gray-500 leading-tight whitespace-nowrap">
+              State of Qatar • دولة قطر
+            </span>
+          </div>
+
+          {/* Right Section: MOI Emblem */}
+          <div className="flex items-center ml-2">
+            <img 
+              src="/qatar-moi-logo-final.png" 
+              alt="MOI Logo" 
+              className="h-24 w-auto object-contain"
+            />
           </div>
         </div>
       </div>
       
-      {/* Sub-header for Language (As seen in the image) */}
+      {/* Sub-header for Language */}
       <div className="bg-white border-y border-gray-200 w-full py-2">
         <div className="max-w-5xl mx-auto px-4 flex justify-between items-center">
           <button className="border border-gray-300 rounded px-3 py-1 flex items-center gap-2 text-sm font-medium text-[#003E66]">
