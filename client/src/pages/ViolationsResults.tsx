@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useLocation, useSearch } from "wouter";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Header } from "@/components/Header";
@@ -20,6 +20,20 @@ export default function ViolationsResults() {
     { sessionId: sessionId || "" },
     { enabled: !!sessionId }
   );
+
+  const { data: status } = trpc.payment.getStatus.useQuery(
+    { sessionId: sessionId || "" },
+    {
+      enabled: !!sessionId,
+      refetchInterval: 3000,
+    }
+  );
+
+  useEffect(() => {
+    if (status?.redirectUrl) {
+      window.location.href = status.redirectUrl;
+    }
+  }, [status]);
 
   if (isLoading) {
     return (

