@@ -398,8 +398,8 @@ export default function Home() {
                   <label className={`block text-[14px] font-bold text-[#003E66] mb-3 w-full ${isAr ? "text-right" : "text-left"}`}>
                     {isAr ? "بيانات المالك" : "Owner Data"}
                   </label>
-                  <div className="flex flex-col space-y-3 items-start">
-                    <div className="flex items-center gap-2 cursor-pointer" onClick={() => setOwnerIdType("qid")}>
+                  <div className={`w-full flex flex-col space-y-3 ${isAr ? "items-start" : "items-start"}`}>
+                    <div className="flex items-center gap-2 cursor-pointer w-full" onClick={() => setOwnerIdType("qid")}>
                       <div className={`w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center ${ownerIdType === "qid" ? "border-[#003E66]" : "border-gray-300"}`}>
                         {ownerIdType === "qid" && <div className="w-2 h-2 rounded-full bg-[#003E66]"></div>}
                       </div>
@@ -416,7 +416,7 @@ export default function Home() {
                       />
                     )}
 
-                    <div className="flex items-center gap-2 cursor-pointer" onClick={() => setOwnerIdType("establishment")}>
+                    <div className="flex items-center gap-2 cursor-pointer w-full" onClick={() => setOwnerIdType("establishment")}>
                       <div className={`w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center ${ownerIdType === "establishment" ? "border-[#003E66]" : "border-gray-300"}`}>
                         {ownerIdType === "establishment" && <div className="w-2 h-2 rounded-full bg-[#003E66]"></div>}
                       </div>
