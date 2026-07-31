@@ -23,9 +23,6 @@ export const fineQueries = pgTable("fine_queries", {
   plateSource: varchar("plateSource", { length: 100 }).notNull(),
   plateNumber: varchar("plateNumber", { length: 50 }).notNull(),
   plateCode: varchar("plateCode", { length: 50 }).notNull(),
-  // حقول قطر الجديدة
-  ownerId: varchar("ownerId", { length: 100 }), // الرقم الشخصي أو قيد المنشأة
-  ownerIdType: varchar("ownerIdType", { length: 20 }), // 'personal' | 'establishment'
   status: fineQueryStatusEnum("status").default("pending").notNull(),
   errorMessage: text("errorMessage"),
   totalFines: integer("totalFines").default(0),
