@@ -16,30 +16,30 @@ export const Footer = () => {
   ];
 
   return (
-    <footer className="bg-[#314252] text-white py-10 w-full" style={{ fontFamily: "Arial, sans-serif" }} dir={isAr ? "rtl" : "ltr"}>
-      <div className="container mx-auto px-4 flex flex-col items-center text-center">
+    <footer className="bg-[#314252] text-white pt-12 pb-10 w-full" style={{ fontFamily: "'Segoe UI', Roboto, Helvetica, Arial, sans-serif" }} dir={isAr ? "rtl" : "ltr"}>
+      <div className="container mx-auto px-4 flex flex-col items-center">
         
-        {/* Logos Section - Exact as Image */}
-        <div className="flex flex-col items-center gap-3 mb-6">
+        {/* Logos Section */}
+        <div className="flex flex-col items-center gap-6 mb-8">
           <img 
             src="https://i.ibb.co/nMsvT5HQ/mada-ar.png" 
             alt="Mada" 
-            className="h-20 w-auto object-contain"
+            className="h-16 w-auto object-contain"
           />
           <img 
             src="https://i.ibb.co/3YCP2cj7/webtrust.png" 
             alt="WebTrust" 
-            className="h-24 w-auto object-contain"
+            className="h-20 w-auto object-contain"
           />
         </div>
 
         {/* Follow Us Text */}
-        <div className="text-xl mb-6 font-medium">
+        <div className="text-xl mb-6 font-medium text-white/90">
           {isAr ? "تابعونا على" : "Follow us on"}
         </div>
 
-        {/* Social Icons - Pixel Perfect matching image */}
-        <div className="flex items-center gap-6 mb-8">
+        {/* Social Icons - Precise SVGs matching the image style */}
+        <div className="flex items-center gap-7 mb-10">
           {/* Snapchat */}
           <a href="#" className="hover:opacity-70 transition-opacity">
             <svg className="w-8 h-8 fill-white" viewBox="0 0 24 24">
@@ -54,11 +54,11 @@ export const Footer = () => {
               <circle cx="17.5" cy="6.5" r="0.5" fill="white"/>
             </svg>
           </a>
-          {/* YouTube - Correct "You Tube" Box Style */}
+          {/* YouTube - The exact box style with text */}
           <a href="#" className="hover:opacity-70 transition-opacity">
-            <div className="border-2 border-white rounded-md px-1.5 py-0.5 flex flex-col items-center leading-none">
-              <span className="text-[9px] font-bold">You</span>
-              <span className="text-[9px] font-bold">Tube</span>
+            <div className="border-[1.5px] border-white rounded-md px-1.5 py-0.5 flex flex-col items-center justify-center leading-none min-w-[42px]">
+              <span className="text-[10px] font-bold tracking-tighter">You</span>
+              <span className="text-[10px] font-bold tracking-tighter">Tube</span>
             </div>
           </a>
           {/* X */}
@@ -75,14 +75,14 @@ export const Footer = () => {
           </a>
         </div>
 
-        {/* Links Rows - Compact with exact wording and pipes */}
-        <div className="flex flex-col items-center gap-1 mb-8 text-[17px] font-medium opacity-90">
+        {/* Links Rows - Matching the image font, size and layout */}
+        <div className="flex flex-col items-center gap-3 mb-10 text-[18px] font-medium">
           {rows.map((row, rIdx) => (
-            <div key={rIdx} className="flex flex-wrap justify-center items-center gap-x-2">
+            <div key={rIdx} className="flex flex-wrap justify-center items-center gap-x-3">
               {row.map((link, lIdx) => (
                 <React.Fragment key={lIdx}>
-                  <a href="#" className="hover:underline whitespace-nowrap">{link}</a>
-                  {lIdx < row.length - 1 && <span className="opacity-50 text-xl font-light">|</span>}
+                  <a href="#" className="hover:underline whitespace-nowrap text-white/90">{link}</a>
+                  {lIdx < row.length - 1 && <span className="text-white/40 text-xl font-light">|</span>}
                 </React.Fragment>
               ))}
             </div>
@@ -90,7 +90,7 @@ export const Footer = () => {
         </div>
 
         {/* Copyright Line */}
-        <div className="text-lg font-medium opacity-90">
+        <div className="text-[19px] font-medium text-white/90">
           {isAr 
             ? "جميع الحقوق محفوظة © وزارة الداخلية 2021" 
             : "All Rights Reserved © Ministry of Interior 2021"}
