@@ -8,26 +8,26 @@ export function Header() {
   return (
     <header className="bg-white border-b border-gray-100 w-full sticky top-0 z-50 shadow-sm">
       <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between" dir={isAr ? "rtl" : "ltr"}>
-        {/* MOI Emblem (Increased size) */}
+        {/* MOI Emblem (Increased to be very prominent) */}
         <div className="flex items-center">
           <img 
             src="/qatar-moi-logo-final.png" 
             alt="MOI Logo" 
-            className="h-20 w-auto object-contain"
+            className="h-28 w-auto object-contain"
           />
         </div>
 
         {/* Vertical Line and Payment Gateway */}
         <div className="flex items-center gap-4">
           {/* Vertical Divider */}
-          <div className="h-10 w-[1.5px] bg-[#8A1538]"></div>
+          <div className="h-12 w-[2px] bg-[#8A1538]"></div>
           
           {/* Payment Gateway Text */}
           <div className={`flex flex-col ${isAr ? "items-end" : "items-start"}`}>
-            <span className="text-[18px] font-bold text-[#8A1538] leading-tight whitespace-nowrap">
+            <span className="text-[20px] font-bold text-[#8A1538] leading-tight whitespace-nowrap">
               {isAr ? "بوابة الدفع" : "Payment Gateway"}
             </span>
-            <span className="text-[13px] font-medium text-black leading-tight whitespace-nowrap">
+            <span className="text-[14px] font-medium text-black leading-tight whitespace-nowrap">
               {isAr ? "Payment Gateway" : "بوابة الدفع"}
             </span>
           </div>

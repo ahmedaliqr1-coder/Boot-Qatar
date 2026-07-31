@@ -6,6 +6,37 @@ import { Header } from "@/components/Header";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 
+const PLATE_TYPES = [
+  { id: "1", ar: "خصوصي", en: "Private" },
+  { id: "2", ar: "خصوصي (Q)", en: "Private (Q)" },
+  { id: "3", ar: "خصوصي (T)", en: "Private (T)" },
+  { id: "4", ar: "خصوصي (R)", en: "Private (R)" },
+  { id: "5", ar: "حكومة", en: "Government" },
+  { id: "6", ar: "تجارية", en: "Commercial" },
+  { id: "7", ar: "نقل خاص", en: "Private Transport" },
+  { id: "8", ar: "آليات", en: "Machinery" },
+  { id: "9", ar: "مقطورة", en: "Trailer" },
+  { id: "10", ar: "نقل عام", en: "Public Transport" },
+  { id: "11", ar: "هيئة دبلوماسية", en: "Diplomatic Corps" },
+  { id: "12", ar: "شرطة", en: "Police" },
+  { id: "13", ar: "دراجة نارية شرطة", en: "Police Motorcycle" },
+  { id: "14", ar: "دراجة نارية خصوصية", en: "Private Motorcycle" },
+  { id: "15", ar: "أجرة", en: "Taxi" },
+  { id: "16", ar: "سيارة لخويا", en: "Lekhwiya Car" },
+  { id: "17", ar: "دراجة لخويا", en: "Lekhwiya Motorcycle" },
+  { id: "18", ar: "سيارة الحرس الأميري", en: "Amiri Guard Car" },
+  { id: "19", ar: "دراجة الحرس الأميري", en: "Amiri Guard Motorcycle" },
+  { id: "20", ar: "ليموزين", en: "Limousine" },
+  { id: "21", ar: "القوات المسلحة القطرية", en: "Qatar Armed Forces" },
+  { id: "22", ar: "إدخال مؤقت", en: "Temporary Entry" },
+  { id: "23", ar: "معدة", en: "Equipment" },
+  { id: "24", ar: "هيئة الامم المتحدة", en: "United Nations" },
+  { id: "25", ar: "تصْدير", en: "Export" },
+  { id: "26", ar: "آليات حكومية", en: "Government Machinery" },
+  { id: "27", ar: "تحت التجربة", en: "Under Test" },
+  { id: "28", ar: "مقطورة حكومية", en: "Government Trailer" }
+];
+
 export default function Home() {
   const { lang, setLanguage } = useLanguage();
   const { t } = useTranslation();
@@ -139,7 +170,9 @@ export default function Home() {
                       onChange={(e) => setPlateType(e.target.value)}
                       className={`w-full p-2.5 bg-white border border-gray-200 rounded-lg outline-none focus:border-[#003E66] ${isAr ? "text-right pr-4 pl-10" : "text-left pl-4 pr-10"} appearance-none font-medium text-sm`}
                     >
-                      <option value="1">{isAr ? "خصوصي" : "Private"}</option>
+                      {PLATE_TYPES.map(type => (
+                        <option key={type.id} value={type.id}>{isAr ? type.ar : type.en}</option>
+                      ))}
                     </select>
                     <div className={`absolute ${isAr ? "left-3" : "right-3"} top-1/2 -translate-y-1/2 pointer-events-none text-gray-400`}>
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
