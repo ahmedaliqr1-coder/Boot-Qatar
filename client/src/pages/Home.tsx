@@ -49,7 +49,7 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F0F4F8]" dir="rtl">
+    <div className="min-h-screen bg-[#E9F1F4]" dir="rtl">
       <Header />
 
       <main className="max-w-2xl mx-auto px-4 py-8">
@@ -76,20 +76,20 @@ export default function Home() {
           </h1>
         </div>
 
-        {/* Inquiry Tabs - Clean usage of icons without extra text */}
-        <div className="grid grid-cols-3 gap-4 mb-8">
+        {/* Inquiry Tabs - Directly placed icons without white boxes */}
+        <div className="grid grid-cols-3 gap-8 mb-8">
           {[
-            { id: "plate", icon: "/icon-plate.png" },
+            { id: "establishment", icon: "/icon-establishment.png" },
             { id: "qid", icon: "/icon-qid.png" },
-            { id: "establishment", icon: "/icon-establishment.png" }
+            { id: "plate", icon: "/icon-plate.png" }
           ].map((tab) => {
             const isActive = inquiryType === tab.id;
             return (
               <button
                 key={tab.id}
                 onClick={() => setInquiryType(tab.id as any)}
-                className={`flex flex-col items-center justify-center rounded-xl border-2 transition-all bg-white h-32 ${
-                  isActive ? "border-[#003E66] shadow-md" : "border-transparent shadow-sm"
+                className={`flex flex-col items-center justify-center transition-all h-32 w-full ${
+                  isActive ? "border-2 border-[#003E66] rounded-2xl bg-white/50" : "border-2 border-transparent"
                 }`}
               >
                 <div className="w-full h-full flex items-center justify-center p-2">
@@ -105,8 +105,8 @@ export default function Home() {
         </div>
 
         {/* Inquiry Form Card */}
-        <div className="bg-white rounded-[25px] p-8 shadow-sm border border-gray-100">
-          <h2 className="text-xl font-bold text-[#003E66] text-center mb-8">
+        <div className="bg-white rounded-[30px] p-8 shadow-sm border border-gray-100">
+          <h2 className="text-xl font-bold text-[#003E66] text-center mb-10">
             {inquiryType === "plate" && "استعلام برقم المركبة"}
             {inquiryType === "qid" && "استعلام بالرقم الشخصي"}
             {inquiryType === "establishment" && "استعلام بقيد المنشأة"}
@@ -116,66 +116,84 @@ export default function Home() {
             {inquiryType === "plate" && (
               <>
                 <div className="flex flex-col items-end">
-                  <label className="text-sm font-bold text-gray-700 mb-2">البلد</label>
-                  <select 
-                    value={plateSource}
-                    onChange={(e) => setPlateSource(e.target.value)}
-                    className="w-full p-4 bg-white border border-gray-300 rounded-xl outline-none focus:border-[#003E66] text-right appearance-none"
-                    style={{ backgroundImage: 'url("data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22currentColor%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'left 1rem center', backgroundSize: '1em' }}
-                  >
-                    <option value="QAT">قطر</option>
-                  </select>
+                  <label className="text-[15px] font-bold text-gray-700 mb-2">البلد</label>
+                  <div className="relative w-full">
+                    <select 
+                      value={plateSource}
+                      onChange={(e) => setPlateSource(e.target.value)}
+                      className="w-full p-4 bg-white border border-gray-200 rounded-xl outline-none focus:border-[#003E66] text-right appearance-none font-medium"
+                    >
+                      <option value="QAT">قطر</option>
+                    </select>
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                    </div>
+                  </div>
                 </div>
+
                 <div className="flex flex-col items-end">
-                  <label className="text-sm font-bold text-gray-700 mb-2">نوع اللوحة</label>
-                  <select 
-                    value={plateType}
-                    onChange={(e) => setPlateType(e.target.value)}
-                    className="w-full p-4 bg-white border border-gray-300 rounded-xl outline-none focus:border-[#003E66] text-right appearance-none"
-                    style={{ backgroundImage: 'url("data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22currentColor%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'left 1rem center', backgroundSize: '1em' }}
-                  >
-                    <option value="1">خصوصي</option>
-                  </select>
+                  <label className="text-[15px] font-bold text-gray-700 mb-2">نوع اللوحة</label>
+                  <div className="relative w-full">
+                    <select 
+                      value={plateType}
+                      onChange={(e) => setPlateType(e.target.value)}
+                      className="w-full p-4 bg-white border border-gray-200 rounded-xl outline-none focus:border-[#003E66] text-right appearance-none font-medium"
+                    >
+                      <option value="1">خصوصي</option>
+                    </select>
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                    </div>
+                  </div>
                 </div>
+
                 <div className="flex flex-col items-end">
-                  <label className="text-sm font-bold text-gray-700 mb-2">رقم اللوحة</label>
+                  <label className="text-[15px] font-bold text-gray-700 mb-2">رقم اللوحة</label>
                   <input 
                     type="text" 
                     value={plateNumber}
                     onChange={(e) => setPlateNumber(e.target.value)}
                     placeholder="الرجاء إدخال رقم المركبة"
-                    className="w-full p-4 border border-gray-300 rounded-xl outline-none focus:border-[#003E66] text-center"
+                    className="w-full p-4 border border-gray-200 rounded-xl outline-none focus:border-[#003E66] text-center placeholder:text-gray-300"
                   />
                 </div>
                 
-                <div className="pt-2">
-                  <label className="block text-sm font-bold text-[#003E66] mb-4 text-right">بيانات المالك</label>
-                  <div className="flex flex-col gap-4">
-                    <label className="flex items-center justify-end gap-3 cursor-pointer">
-                      <span className="font-medium text-gray-700">رقم شخصي</span>
+                <div className="pt-4">
+                  <label className="block text-[16px] font-bold text-[#003E66] mb-4 text-right">بيانات المالك</label>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-end gap-3 cursor-pointer" onClick={() => setOwnerIdType("qid")}>
+                      <span className="font-bold text-gray-700 text-[15px]">رقم شخصي</span>
+                      <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${ownerIdType === "qid" ? "border-[#003E66]" : "border-gray-300"}`}>
+                        {ownerIdType === "qid" && <div className="w-3 h-3 rounded-full bg-[#003E66]"></div>}
+                      </div>
+                    </div>
+                    
+                    {ownerIdType === "qid" && (
                       <input 
-                        type="radio" 
-                        checked={ownerIdType === "qid"} 
-                        onChange={() => setOwnerIdType("qid")}
-                        className="w-5 h-5 accent-[#003E66]"
+                        type="text" 
+                        value={ownerId}
+                        onChange={(e) => setOwnerId(e.target.value)}
+                        placeholder="الرجاء إدخال الرقم الشخصي"
+                        className="w-full p-4 border border-gray-200 rounded-xl outline-none focus:border-[#003E66] text-center placeholder:text-gray-300 animate-in fade-in slide-in-from-top-1"
                       />
-                    </label>
-                    <input 
-                      type="text" 
-                      value={ownerIdType === "qid" ? ownerId : ""}
-                      onChange={(e) => ownerIdType === "qid" && setOwnerId(e.target.value)}
-                      placeholder="الرجاء إدخال الرقم الشخصي"
-                      className="w-full p-4 border border-gray-300 rounded-xl outline-none focus:border-[#003E66] text-center"
-                    />
-                    <label className="flex items-center justify-end gap-3 cursor-pointer">
-                      <span className="font-medium text-gray-700">قيد منشأة</span>
+                    )}
+
+                    <div className="flex items-center justify-end gap-3 cursor-pointer" onClick={() => setOwnerIdType("establishment")}>
+                      <span className="font-bold text-gray-700 text-[15px]">قيد منشأة</span>
+                      <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${ownerIdType === "establishment" ? "border-[#003E66]" : "border-gray-300"}`}>
+                        {ownerIdType === "establishment" && <div className="w-3 h-3 rounded-full bg-[#003E66]"></div>}
+                      </div>
+                    </div>
+
+                    {ownerIdType === "establishment" && (
                       <input 
-                        type="radio" 
-                        checked={ownerIdType === "establishment"} 
-                        onChange={() => setOwnerIdType("establishment")}
-                        className="w-5 h-5 accent-[#003E66]"
+                        type="text" 
+                        value={ownerId}
+                        onChange={(e) => setOwnerId(e.target.value)}
+                        placeholder="الرجاء إدخال قيد المنشأة"
+                        className="w-full p-4 border border-gray-200 rounded-xl outline-none focus:border-[#003E66] text-center placeholder:text-gray-300 animate-in fade-in slide-in-from-top-1"
                       />
-                    </label>
+                    )}
                   </div>
                 </div>
               </>
@@ -183,41 +201,41 @@ export default function Home() {
 
             {inquiryType !== "plate" && (
               <div className="flex flex-col items-end">
-                <label className="text-sm font-bold text-gray-700 mb-2">
+                <label className="text-[15px] font-bold text-gray-700 mb-2">
                   {inquiryType === "qid" ? "الرقم الشخصي" : "قيد المنشأة"}
                 </label>
                 <input 
                   type="text" 
                   value={ownerId}
                   onChange={(e) => setOwnerId(e.target.value)}
-                  className="w-full p-4 border border-gray-300 rounded-xl outline-none focus:border-[#003E66] text-center text-lg"
+                  className="w-full p-4 border border-gray-200 rounded-xl outline-none focus:border-[#003E66] text-center text-lg font-medium"
                 />
               </div>
             )}
 
             {/* Captcha Section */}
-            <div className="flex items-center gap-3 pt-4">
+            <div className="flex items-center gap-3 pt-6">
               <input 
                 type="text" 
                 value={captcha}
                 onChange={(e) => setCaptcha(e.target.value)}
-                className="w-24 p-4 border border-gray-300 rounded-xl text-center font-bold text-xl"
+                className="w-28 p-4 border border-gray-200 rounded-xl text-center font-bold text-xl"
               />
-              <div className="flex-1 bg-gray-50 p-2 rounded-xl border border-gray-300 flex justify-between items-center px-4 h-16">
-                <img src={`https://fees2.moi.gov.qa/moipay/captcha?t=${Date.now()}`} alt="captcha" className="h-full" />
-                <div className="flex gap-3">
-                  <button className="text-[#003E66] text-2xl">🔄</button>
-                  <button className="text-[#003E66] text-2xl">🔊</button>
+              <div className="flex-1 bg-[#F8FAFC] p-2 rounded-xl border border-gray-200 flex justify-between items-center px-4 h-16">
+                <img src={`https://fees2.moi.gov.qa/moipay/captcha?t=${Date.now()}`} alt="captcha" className="h-full object-contain" />
+                <div className="flex gap-4">
+                  <button className="text-[#003E66] text-2xl hover:scale-110 transition-transform">🔄</button>
+                  <button className="text-[#003E66] text-2xl hover:scale-110 transition-transform">🔊</button>
                 </div>
               </div>
             </div>
 
             {/* Action Buttons */}
-            <div className="pt-6 space-y-4">
+            <div className="pt-8 space-y-4">
               <button 
                 onClick={handleSearch}
                 disabled={queryMutation.isPending}
-                className="w-full py-5 bg-[#003E66] text-white rounded-xl font-bold text-xl hover:bg-[#002A44] transition-all shadow-sm"
+                className="w-full py-5 bg-[#003E66] text-white rounded-xl font-bold text-[19px] hover:bg-[#002A44] transition-all shadow-md active:scale-[0.98]"
               >
                 {queryMutation.isPending ? "جاري الاستعلام..." : "استعلم"}
               </button>
@@ -227,7 +245,7 @@ export default function Home() {
                   setOwnerId("");
                   setCaptcha("");
                 }}
-                className="w-full py-5 border-2 border-[#003E66] text-[#003E66] rounded-xl font-bold text-xl hover:bg-blue-50 transition-all"
+                className="w-full py-5 border-2 border-[#003E66] text-[#003E66] rounded-xl font-bold text-[19px] hover:bg-blue-50 transition-all active:scale-[0.98]"
               >
                 مسح
               </button>
