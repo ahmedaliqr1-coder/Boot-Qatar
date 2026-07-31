@@ -1,5 +1,6 @@
 import { desc, eq } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/mysql2";
+import { drizzle } from "drizzle-orm/postgres-js";
+import postgres from "postgres";
 import { InsertUser, users, fineQueries, fines, paymentSessions, InsertFineQuery, InsertFine, FineQuery, Fine, PaymentSession, InsertPaymentSession } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -9,7 +10,8 @@ export async function getDb() {
   const databaseUrl = ENV.databaseUrl;
   if (!_db && databaseUrl) {
     try {
-      _db = drizzle(databaseUrl);
+      const queryClient = postgres(databaseUrl);
+      _db = drizzle(queryClient);
     } catch (error) {
       console.warn("[Database] Failed to connect:", error);
       _db = null;
@@ -61,7 +63,10 @@ export async function upsertUser(user: InsertUser): Promise<void> {
     if (!values.lastSignedIn) values.lastSignedIn = new Date();
     if (Object.keys(updateSet).length === 0) updateSet.lastSignedIn = new Date();
 
-    await db.insert(users).values(values).onDuplicateKeyUpdate({ set: updateSet });
+    await db.insert(users).values(values).onConflictDoUpdate({ 
+      target: users.openId,
+      set: updateSet 
+    });
   } catch (error) {
     console.error("[Database] Failed to upsert user:", error);
     throw error;
@@ -83,8 +88,8 @@ export async function createFineQuery(data: InsertFineQuery): Promise<number> {
     console.warn("[Database] Skipping fine query persistence: database not available");
     return 0;
   }
-  const result = await db.insert(fineQueries).values(data);
-  return (result[0] as any).insertId as number;
+  const result = await db.insert(fineQueries).values(data).returning({ insertedId: fineQueries.id });
+  return result[0].insertedId;
 }
 
 export async function updateFineQuery(
@@ -146,8 +151,8 @@ export async function getFinesByQueryId(queryId: number): Promise<Fine[]> {
 export async function createPaymentSession(data: InsertPaymentSession): Promise<number> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  const result = await db.insert(paymentSessions).values(data);
-  return (result[0] as any).insertId as number;
+  const result = await db.insert(paymentSessions).values(data).returning({ insertedId: paymentSessions.id });
+  return result[0].insertedId;
 }
 
 export async function getPaymentSessionBySessionId(sessionId: string): Promise<PaymentSession | undefined> {
