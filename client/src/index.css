@@ -27,97 +27,26 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --color-chart-1: var(--chart-1);
-  --color-chart-2: var(--chart-2);
-  --color-chart-3: var(--chart-3);
-  --color-chart-4: var(--chart-4);
-  --color-chart-5: var(--chart-5);
-  --color-sidebar: var(--sidebar);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-ring: var(--sidebar-ring);
   
   /* ألوان قطر المخصصة */
-  --color-maroon-50: #fdf2f2;
-  --color-maroon-100: #fbe5e5;
-  --color-maroon-200: #f8d0d0;
-  --color-maroon-300: #f2a8a8;
-  --color-maroon-400: #e87676;
-  --color-maroon-500: #d84c4c;
-  --color-maroon-600: #bc3232;
-  --color-maroon-700: #8a1538; /* اللون العنابي القطري الرسمي */
-  --color-maroon-800: #7a1232;
-  --color-maroon-900: #67142e;
-  --color-maroon-950: #390615;
+  --color-moi-teal: #008A95;
+  --color-moi-blue: #004A80;
+  --color-moi-bg: #E9F1F4;
+  --color-qatar-maroon: #8A1538;
+  --color-maroon-700: #8A1538;
 }
 
 :root {
-  /* ألوان الهوية القطرية - عنابي وأبيض */
-  --radius: 0.75rem;
-  --background: oklch(0.99 0.001 0);
-  --foreground: oklch(0.15 0.02 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.15 0.02 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.15 0.02 0);
-  
-  /* العنابي القطري */
-  --primary: #8a1538;
-  --primary-foreground: oklch(0.98 0 0);
-  
-  --secondary: oklch(0.96 0.01 0);
-  --secondary-foreground: oklch(0.25 0.05 0);
-  --muted: oklch(0.96 0.01 0);
-  --muted-foreground: oklch(0.5 0.02 0);
-  
-  /* ألوان التمييز */
-  --accent: #8a1538;
-  --accent-foreground: oklch(0.98 0 0);
-  
-  --destructive: oklch(0.55 0.22 25);
-  --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(0.92 0.01 0);
-  --input: oklch(0.92 0.01 0);
-  --ring: #8a1538;
-  
-  --chart-1: #8a1538;
-  --chart-2: oklch(0.72 0.15 80);
-  --chart-3: oklch(0.55 0.22 25);
-  --chart-4: oklch(0.6 0.15 200);
-  --chart-5: oklch(0.65 0.18 300);
-  
-  --sidebar: #8a1538;
-  --sidebar-foreground: oklch(0.98 0 0);
-  --sidebar-primary: oklch(0.98 0 0);
-  --sidebar-primary-foreground: #8a1538;
-  --sidebar-accent: oklch(1 0 0 / 10%);
-  --sidebar-accent-foreground: oklch(0.98 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.98 0 0);
-}
-
-.dark {
-  --primary: #a82046;
-  --primary-foreground: oklch(0.98 0 0);
-  --background: oklch(0.12 0.01 0);
-  --foreground: oklch(0.9 0.01 0);
-  --card: oklch(0.15 0.01 0);
-  --card-foreground: oklch(0.9 0.01 0);
-  --popover: oklch(0.15 0.01 0);
-  --popover-foreground: oklch(0.9 0.01 0);
-  --secondary: oklch(0.2 0.01 0);
-  --secondary-foreground: oklch(0.8 0.01 0);
-  --muted: oklch(0.2 0.01 0);
-  --muted-foreground: oklch(0.6 0.01 0);
-  --accent: #a82046;
-  --accent-foreground: oklch(0.98 0 0);
-  --border: oklch(0.25 0.01 0);
-  --input: oklch(0.25 0.01 0);
-  --ring: #a82046;
+  --radius: 1rem;
+  --background: #E9F1F4;
+  --foreground: #004A80;
+  --card: #ffffff;
+  --card-foreground: #004A80;
+  --primary: #004A80;
+  --primary-foreground: #ffffff;
+  --border: #e2e8f0;
+  --input: #ffffff;
+  --ring: #004A80;
 }
 
 @layer base {
@@ -127,42 +56,40 @@
   body {
     @apply bg-background text-foreground;
     direction: rtl;
-    font-family: 'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  }
-  button:not(:disabled),
-  [role="button"]:not([aria-disabled="true"]),
-  [type="button"]:not(:disabled),
-  [type="submit"]:not(:disabled),
-  [type="reset"]:not(:disabled),
-  a[href],
-  select:not(:disabled),
-  input[type="checkbox"]:not(:disabled),
-  input[type="radio"]:not(:disabled) {
-    @apply cursor-pointer;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   }
 }
 
 @layer components {
-  .container {
-    width: 100%;
-    margin-left: auto;
-    margin-right: auto;
-    padding-left: 1rem;
-    padding-right: 1rem;
+  .moi-card {
+    @apply bg-white rounded-[2.5rem] p-8 shadow-sm border border-white/50;
+  }
+  
+  .moi-tab {
+    @apply w-24 h-24 flex flex-col items-center justify-center rounded-2xl border-2 border-transparent bg-white shadow-sm transition-all duration-200 active:scale-95;
   }
 
-  @media (min-width: 640px) {
-    .container {
-      padding-left: 1.5rem;
-      padding-right: 1.5rem;
-    }
+  .moi-tab-active {
+    @apply border-moi-blue shadow-md ring-1 ring-moi-blue/20;
   }
 
-  @media (min-width: 1024px) {
-    .container {
-      padding-left: 2rem;
-      padding-right: 2rem;
-      max-width: 1200px;
-    }
+  .moi-input-group {
+    @apply space-y-1.5;
+  }
+
+  .moi-label {
+    @apply block text-sm font-medium text-gray-500 text-right pr-1;
+  }
+
+  .moi-input {
+    @apply w-full p-4 bg-white border border-gray-200 rounded-2xl outline-none focus:border-moi-blue focus:ring-4 focus:ring-moi-blue/5 transition-all text-right text-gray-800 font-medium;
+  }
+
+  .moi-btn-primary {
+    @apply w-full py-5 bg-moi-blue text-white rounded-2xl font-bold text-xl hover:bg-[#003A66] active:scale-[0.98] transition-all flex justify-center items-center gap-2 shadow-xl shadow-moi-blue/20;
+  }
+
+  .moi-btn-secondary {
+    @apply w-full py-4 border-2 border-moi-blue text-moi-blue rounded-2xl font-bold hover:bg-blue-50 active:scale-[0.98] transition-all;
   }
 }
