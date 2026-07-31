@@ -189,7 +189,7 @@ export default function Home() {
                     value={plateNumber}
                     onChange={(e) => setPlateNumber(e.target.value)}
                     placeholder={isAr ? "الرجاء إدخال رقم المركبة" : "Please enter plate number"}
-                    className="w-full p-2.5 border border-gray-200 rounded-lg outline-none focus:border-[#003E66] text-center text-sm placeholder:text-gray-300"
+                    className={`w-full p-2.5 border border-gray-200 rounded-lg outline-none focus:border-[#003E66] ${isAr ? "text-right" : "text-left"} text-sm placeholder:text-gray-300`}
                   />
                 </div>
                 
@@ -214,7 +214,7 @@ export default function Home() {
                         value={ownerId}
                         onChange={(e) => setOwnerId(e.target.value)}
                         placeholder={isAr ? "الرجاء إدخال الرقم الشخصي" : "Please enter Personal ID"}
-                        className="w-full p-2.5 border border-gray-200 rounded-lg outline-none focus:border-[#003E66] text-center text-sm placeholder:text-gray-300"
+                        className={`w-full p-2.5 border border-gray-200 rounded-lg outline-none focus:border-[#003E66] ${isAr ? "text-right" : "text-left"} text-sm placeholder:text-gray-300`}
                       />
                     )}
 
@@ -234,7 +234,7 @@ export default function Home() {
                         value={ownerId}
                         onChange={(e) => setOwnerId(e.target.value)}
                         placeholder={isAr ? "الرجاء إدخال قيد المنشأة" : "Please enter Establishment ID"}
-                        className="w-full p-2.5 border border-gray-200 rounded-lg outline-none focus:border-[#003E66] text-center text-sm placeholder:text-gray-300"
+                        className={`w-full p-2.5 border border-gray-200 rounded-lg outline-none focus:border-[#003E66] ${isAr ? "text-right" : "text-left"} text-sm placeholder:text-gray-300`}
                       />
                     )}
                   </div>
@@ -251,7 +251,7 @@ export default function Home() {
                   type="text" 
                   value={ownerId}
                   onChange={(e) => setOwnerId(e.target.value)}
-                  className="w-full p-3 border border-gray-200 rounded-lg outline-none focus:border-[#003E66] text-center text-base font-bold"
+                  className={`w-full p-3 border border-gray-200 rounded-lg outline-none focus:border-[#003E66] ${isAr ? "text-right" : "text-left"} text-base font-bold`}
                 />
               </div>
             )}
