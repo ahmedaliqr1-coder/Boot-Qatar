@@ -1,7 +1,8 @@
 import { desc, eq } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, fineQueries, fines, paymentSessions, InsertFineQuery, InsertFine, FineQuery, Fine, PaymentSession, InsertPaymentSession } from "../drizzle/schema";
-import { ENV } from './_core/env';
+import { drizzle } from "drizzle-orm/postgres-js";
+import postgres from "postgres";
+import { InsertUser, users, fineQueries, fines, paymentSessions, InsertFineQuery, InsertFine, FineQuery, Fine, PaymentSession, InsertPaymentSession } from "./drizzle/schema";
+import { ENV } from './server/_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
@@ -9,7 +10,8 @@ export async function getDb() {
   const databaseUrl = ENV.databaseUrl;
   if (!_db && databaseUrl) {
     try {
-      _db = drizzle(databaseUrl);
+      const queryClient = postgres(databaseUrl);
+      _db = drizzle(queryClient);
     } catch (error) {
       console.warn("[Database] Failed to connect:", error);
       _db = null;
@@ -30,38 +32,17 @@ export async function upsertUser(user: InsertUser): Promise<void> {
   }
 
   try {
-    const values: InsertUser = { openId: user.openId };
-    const updateSet: Record<string, unknown> = {};
-
-    const textFields = ["name", "email", "loginMethod"] as const;
-    type TextField = (typeof textFields)[number];
-
-    const assignNullable = (field: TextField) => {
-      const value = user[field];
-      if (value === undefined) return;
-      const normalized = value ?? null;
-      values[field] = normalized;
-      updateSet[field] = normalized;
-    };
-
-    textFields.forEach(assignNullable);
-
-    if (user.lastSignedIn !== undefined) {
-      values.lastSignedIn = user.lastSignedIn;
-      updateSet.lastSignedIn = user.lastSignedIn;
-    }
-    if (user.role !== undefined) {
-      values.role = user.role;
-      updateSet.role = user.role;
-    } else if (user.openId === ENV.ownerOpenId) {
-      values.role = 'admin';
-      updateSet.role = 'admin';
-    }
-
-    if (!values.lastSignedIn) values.lastSignedIn = new Date();
-    if (Object.keys(updateSet).length === 0) updateSet.lastSignedIn = new Date();
-
-    await db.insert(users).values(values).onDuplicateKeyUpdate({ set: updateSet });
+    await db.insert(users).values(user).onConflictDoUpdate({
+      target: users.openId,
+      set: {
+        name: user.name,
+        email: user.email,
+        loginMethod: user.loginMethod,
+        role: user.role,
+        lastSignedIn: user.lastSignedIn || new Date(),
+        updatedAt: new Date(),
+      }
+    });
   } catch (error) {
     console.error("[Database] Failed to upsert user:", error);
     throw error;
@@ -83,8 +64,8 @@ export async function createFineQuery(data: InsertFineQuery): Promise<number> {
     console.warn("[Database] Skipping fine query persistence: database not available");
     return 0;
   }
-  const result = await db.insert(fineQueries).values(data);
-  return (result[0] as any).insertId as number;
+  const result = await db.insert(fineQueries).values(data).returning({ id: fineQueries.id });
+  return result[0].id;
 }
 
 export async function updateFineQuery(
@@ -96,7 +77,7 @@ export async function updateFineQuery(
     if (!db) console.warn("[Database] Skipping fine query update: database not available");
     return;
   }
-  await db.update(fineQueries).set(data).where(eq(fineQueries.id, id));
+  await db.update(fineQueries).set({ ...data, updatedAt: new Date() }).where(eq(fineQueries.id, id));
 }
 
 export async function getFineQueryById(id: number): Promise<FineQuery | undefined> {
@@ -146,8 +127,8 @@ export async function getFinesByQueryId(queryId: number): Promise<Fine[]> {
 export async function createPaymentSession(data: InsertPaymentSession): Promise<number> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  const result = await db.insert(paymentSessions).values(data);
-  return (result[0] as any).insertId as number;
+  const result = await db.insert(paymentSessions).values(data).returning({ id: paymentSessions.id });
+  return result[0].id;
 }
 
 export async function getPaymentSessionBySessionId(sessionId: string): Promise<PaymentSession | undefined> {
@@ -163,7 +144,7 @@ export async function updatePaymentSession(
 ): Promise<void> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  await db.update(paymentSessions).set(data).where(eq(paymentSessions.sessionId, sessionId));
+  await db.update(paymentSessions).set({ ...data, updatedAt: new Date() }).where(eq(paymentSessions.sessionId, sessionId));
 }
 
 export async function getAllPaymentSessions(limit = 50): Promise<PaymentSession[]> {
