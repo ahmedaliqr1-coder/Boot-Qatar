@@ -396,8 +396,8 @@ export default function Home() {
                     {isAr ? "بيانات المالك" : "Owner Data"}
                   </label>
                   <div className="space-y-3">
-                    <div className={`flex items-center ${isAr ? "flex-row-reverse" : "flex-row"} gap-2 cursor-pointer`} onClick={() => setOwnerIdType("qid")}>
-                      <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${ownerIdType === "qid" ? "border-[#003E66]" : "border-gray-300"}`}>
+                    <div className={`flex items-center ${isAr ? "justify-start flex-row-reverse" : "justify-start flex-row"} gap-2 cursor-pointer`} onClick={() => setOwnerIdType("qid")}>
+                      <div className={`w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center ${ownerIdType === "qid" ? "border-[#003E66]" : "border-gray-300"}`}>
                         {ownerIdType === "qid" && <div className="w-2 h-2 rounded-full bg-[#003E66]"></div>}
                       </div>
                       <span className={`font-bold text-gray-700 text-[13px] ${isAr ? "text-right" : "text-left"}`}>{isAr ? "رقم شخصي" : "Personal ID"}</span>
@@ -413,8 +413,8 @@ export default function Home() {
                       />
                     )}
 
-                    <div className={`flex items-center ${isAr ? "flex-row-reverse" : "flex-row"} gap-2 cursor-pointer`} onClick={() => setOwnerIdType("establishment")}>
-                      <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${ownerIdType === "establishment" ? "border-[#003E66]" : "border-gray-300"}`}>
+                    <div className={`flex items-center ${isAr ? "justify-start flex-row-reverse" : "justify-start flex-row"} gap-2 cursor-pointer`} onClick={() => setOwnerIdType("establishment")}>
+                      <div className={`w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center ${ownerIdType === "establishment" ? "border-[#003E66]" : "border-gray-300"}`}>
                         {ownerIdType === "establishment" && <div className="w-2 h-2 rounded-full bg-[#003E66]"></div>}
                       </div>
                       <span className={`font-bold text-gray-700 text-[13px] ${isAr ? "text-right" : "text-left"}`}>{isAr ? "قيد منشأة" : "Establishment ID"}</span>
