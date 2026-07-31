@@ -14,12 +14,12 @@ export function Header() {
           </span>
         </div>
 
-        {/* Right Section: Vertical Line and MOI Emblem (Text Removed) */}
+        {/* Right Section: Vertical Line and MOI Emblem (No extra code text) */}
         <div className="flex items-center gap-6">
           {/* Vertical Divider */}
           <div className="h-14 w-[1.5px] bg-[#8A1538]"></div>
           
-          {/* MOI Emblem replaces the text */}
+          {/* MOI Emblem (This is the official logo which includes the text within the image) */}
           <div className="flex items-center">
             <img 
               src="/qatar-moi-logo-final.png" 
