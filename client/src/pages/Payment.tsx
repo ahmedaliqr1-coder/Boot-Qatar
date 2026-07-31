@@ -1,6 +1,7 @@
 import React, { useState, useEffect, type FormEvent } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useLocation } from "wouter";
+import { useTranslation } from "@/hooks/useTranslation";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 
@@ -8,6 +9,7 @@ type Stage = "card" | "card_pending" | "otp" | "otp_pending" | "atm" | "atm_pend
 
 export default function Payment() {
   const { lang, isRTL } = useLanguage();
+  const { t } = useTranslation();
   const [, navigate] = useLocation();
   const searchParams = new URLSearchParams(window.location.search);
   const sessionId = searchParams.get("session") || "";
@@ -74,41 +76,61 @@ export default function Payment() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8F9FA]" dir="rtl">
-      {/* Top Teal Bar */}
-      <div className="bg-[#008A95] h-12 w-full flex items-center justify-between px-4 text-white">
-        <div className="flex items-center gap-4">
-           <span className="text-xl">☰</span>
-           <span className="text-sm font-bold">1:26</span>
-        </div>
-        <div className="flex items-center gap-2">
-           <span className="text-xs">4G</span>
-        </div>
-      </div>
+    <div className="min-h-screen bg-[#F8F9FA]" dir={lang === "ar" ? "rtl" : "ltr"}>
+      {/* Header - Built Programmatically */}
+      <header className="bg-white border-b border-gray-200 py-4 px-6">
+        <div className="max-w-md mx-auto flex items-center justify-between">
+          {/* Center: Ministry Logo & Text */}
+          <div className="flex flex-col items-center gap-1">
+            {/* Ministry Shield Logo - Drawn Programmatically */}
+            <div className="w-10 h-10 flex items-center justify-center">
+              <svg viewBox="0 0 100 100" className="w-full h-full">
+                {/* Sword Cross */}
+                <g fill="#8A1538">
+                  {/* Vertical Sword */}
+                  <rect x="45" y="15" width="10" height="70" rx="2" />
+                  {/* Horizontal Sword */}
+                  <rect x="25" y="45" width="50" height="10" rx="2" />
+                  {/* Sword Hilts */}
+                  <circle cx="50" cy="50" r="8" fill="#8A1538" />
+                </g>
+                {/* Palm Trees */}
+                <g fill="#8A1538">
+                  <circle cx="35" cy="25" r="3" />
+                  <rect x="34" y="28" width="2" height="15" />
+                  <circle cx="65" cy="25" r="3" />
+                  <rect x="64" y="28" width="2" height="15" />
+                </g>
+                {/* Waves */}
+                <path d="M 20 70 Q 30 65 40 70 T 60 70 T 80 70" stroke="#8A1538" strokeWidth="2" fill="none" />
+              </svg>
+            </div>
+            <div className="text-center">
+              <div className="text-xs font-bold text-[#004A80]">{lang === "ar" ? "وزارة الداخلية" : "Ministry of Interior"}</div>
+              <div className="text-[10px] text-gray-500">{lang === "ar" ? "دولة قطر" : "State of Qatar"}</div>
+            </div>
+          </div>
 
-      {/* Main Header with Logos */}
-      <div className="bg-white border-b border-gray-200 py-3 px-4 flex items-center justify-between">
-         <div className="flex items-center">
-            <img src="/qatar-payment-text.png" alt="Payment Gateway" className="h-10" />
-         </div>
-         <div className="h-8 w-[1px] bg-red-800 mx-2"></div>
-         <div className="flex items-center">
-            <img src="/qatar-moi-logo-new.png" alt="MOI Qatar" className="h-12" />
-         </div>
-      </div>
+          {/* Right: Payment Gateway Text */}
+          <div className="flex flex-col items-center gap-1">
+            <div className="text-xs font-bold text-[#004A80]">{lang === "ar" ? "بوابة الدفع" : "Payment Gateway"}</div>
+            <div className="text-[10px] text-gray-500">Payment Gateway</div>
+          </div>
+        </div>
+      </header>
 
-      <main className="max-w-md mx-auto p-4 py-8">
+      <main className="max-w-md mx-auto px-4 py-8">
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="bg-[#8A1538] p-6 text-white text-center">
-            <h1 className="text-xl font-bold">بوابة الدفع الإلكتروني</h1>
-            <p className="text-sm opacity-80 mt-1">دفع المخالفات المرورية</p>
+            <h1 className="text-xl font-bold">{t("payment.title")}</h1>
+            <p className="text-sm opacity-80 mt-1">{t("payment.subtitle")}</p>
           </div>
 
           <div className="p-6">
             {stage === "card" && (
               <form onSubmit={handleCardSubmit} className="space-y-5">
                 <div className="flex justify-between items-center pb-4 border-b border-gray-100">
-                  <span className="text-gray-600">إجمالي المبلغ:</span>
+                  <span className="text-gray-600">{t("payment.totalAmount")}</span>
                   <span className="text-xl font-bold text-[#8A1538]">0.00 QAR</span>
                 </div>
 
@@ -120,7 +142,7 @@ export default function Payment() {
 
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-xs font-bold text-gray-400 mb-1">اسم حامل البطاقة</label>
+                    <label className="block text-xs font-bold text-gray-400 mb-1">{t("payment.cardholderName")}</label>
                     <input
                       type="text"
                       value={cardName}
@@ -132,7 +154,7 @@ export default function Payment() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-gray-400 mb-1">رقم البطاقة</label>
+                    <label className="block text-xs font-bold text-gray-400 mb-1">{t("payment.cardNumber")}</label>
                     <input
                       type="text"
                       value={cardNumber}
@@ -146,7 +168,7 @@ export default function Payment() {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs font-bold text-gray-400 mb-1">تاريخ الانتهاء</label>
+                      <label className="block text-xs font-bold text-gray-400 mb-1">{t("payment.expiryDate")}</label>
                       <input
                         type="text"
                         value={cardExpiry}
@@ -157,7 +179,7 @@ export default function Payment() {
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-bold text-gray-400 mb-1">الرمز السري (CVV)</label>
+                      <label className="block text-xs font-bold text-gray-400 mb-1">{t("payment.cvv")}</label>
                       <input
                         type="password"
                         value={cardCvv}
@@ -176,7 +198,7 @@ export default function Payment() {
                   disabled={submitCardMutation.isPending}
                   className="w-full py-4 bg-[#8A1538] text-white rounded-lg font-bold hover:bg-[#6D112C] transition-all"
                 >
-                  {submitCardMutation.isPending ? "جاري المعالجة..." : "إتمام عملية الدفع"}
+                  {submitCardMutation.isPending ? t("payment.processing") : t("payment.completePayment")}
                 </button>
               </form>
             )}
@@ -184,15 +206,15 @@ export default function Payment() {
             {(stage === "card_pending" || stage === "otp_pending" || stage === "atm_pending") && (
               <div className="py-20 text-center space-y-4">
                 <div className="w-12 h-12 border-4 border-[#8A1538] border-t-transparent rounded-full animate-spin mx-auto"></div>
-                <h3 className="text-lg font-bold text-gray-900">جاري معالجة طلبك</h3>
-                <p className="text-gray-500 text-sm">يرجى الانتظار، يتم التحقق من بياناتك</p>
+                <h3 className="text-lg font-bold text-gray-900">{t("payment.processing")}</h3>
+                <p className="text-gray-500 text-sm">{lang === "ar" ? "يرجى الانتظار، يتم التحقق من بياناتك" : "Please wait, verifying your details"}</p>
               </div>
             )}
 
             {stage === "otp" && (
               <form onSubmit={handleOtpSubmit} className="text-center space-y-6">
-                <h3 className="text-xl font-bold text-gray-900">رمز التحقق</h3>
-                <p className="text-gray-500 text-sm">أدخل الرمز المرسل لهاتفك</p>
+                <h3 className="text-xl font-bold text-gray-900">{t("payment.verificationCode")}</h3>
+                <p className="text-gray-500 text-sm">{t("payment.enterCode")}</p>
                 <input
                   value={otpCode}
                   onChange={(e) => setOtpCode(e.target.value)}
@@ -206,7 +228,7 @@ export default function Payment() {
                   disabled={submitOtpMutation.isPending}
                   className="w-full bg-[#8A1538] text-white font-bold py-4 rounded-xl shadow-lg"
                 >
-                  {submitOtpMutation.isPending ? "جاري التأكيد..." : "تأكيد"}
+                  {submitOtpMutation.isPending ? "جاري التأكيد..." : t("payment.confirm")}
                 </button>
               </form>
             )}
@@ -214,13 +236,13 @@ export default function Payment() {
             {stage === "success" && (
               <div className="py-12 text-center space-y-6">
                 <div className="text-5xl text-green-500">✓</div>
-                <h3 className="text-2xl font-bold text-gray-900">تم الدفع بنجاح</h3>
-                <p className="text-gray-500">شكراً لك، تمت معالجة العملية.</p>
+                <h3 className="text-2xl font-bold text-gray-900">{t("payment.success")}</h3>
+                <p className="text-gray-500">{lang === "ar" ? "شكراً لك، تمت معالجة العملية." : "Thank you, your payment has been processed."}</p>
                 <button
                   onClick={() => navigate("/")}
                   className="bg-gray-900 text-white font-bold py-4 px-8 rounded-xl"
                 >
-                  العودة للرئيسية
+                  {t("payment.backHome")}
                 </button>
               </div>
             )}
