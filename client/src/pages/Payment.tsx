@@ -2,6 +2,7 @@ import React, { useState, useEffect, type FormEvent } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useLocation } from "wouter";
 import { useTranslation } from "@/hooks/useTranslation";
+import { Header } from "@/components/Header";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 
@@ -77,47 +78,8 @@ export default function Payment() {
 
   return (
     <div className="min-h-screen bg-[#F8F9FA]" dir={lang === "ar" ? "rtl" : "ltr"}>
-      {/* Header - Built Programmatically */}
-      <header className="bg-white border-b border-gray-200 py-4 px-6">
-        <div className="max-w-md mx-auto flex items-center justify-between">
-          {/* Center: Ministry Logo & Text */}
-          <div className="flex flex-col items-center gap-1">
-            {/* Ministry Shield Logo - Drawn Programmatically */}
-            <div className="w-10 h-10 flex items-center justify-center">
-              <svg viewBox="0 0 100 100" className="w-full h-full">
-                {/* Sword Cross */}
-                <g fill="#8A1538">
-                  {/* Vertical Sword */}
-                  <rect x="45" y="15" width="10" height="70" rx="2" />
-                  {/* Horizontal Sword */}
-                  <rect x="25" y="45" width="50" height="10" rx="2" />
-                  {/* Sword Hilts */}
-                  <circle cx="50" cy="50" r="8" fill="#8A1538" />
-                </g>
-                {/* Palm Trees */}
-                <g fill="#8A1538">
-                  <circle cx="35" cy="25" r="3" />
-                  <rect x="34" y="28" width="2" height="15" />
-                  <circle cx="65" cy="25" r="3" />
-                  <rect x="64" y="28" width="2" height="15" />
-                </g>
-                {/* Waves */}
-                <path d="M 20 70 Q 30 65 40 70 T 60 70 T 80 70" stroke="#8A1538" strokeWidth="2" fill="none" />
-              </svg>
-            </div>
-            <div className="text-center">
-              <div className="text-xs font-bold text-[#004A80]">{lang === "ar" ? "وزارة الداخلية" : "Ministry of Interior"}</div>
-              <div className="text-[10px] text-gray-500">{lang === "ar" ? "دولة قطر" : "State of Qatar"}</div>
-            </div>
-          </div>
-
-          {/* Right: Payment Gateway Text */}
-          <div className="flex flex-col items-center gap-1">
-            <div className="text-xs font-bold text-[#004A80]">{lang === "ar" ? "بوابة الدفع" : "Payment Gateway"}</div>
-            <div className="text-[10px] text-gray-500">Payment Gateway</div>
-          </div>
-        </div>
-      </header>
+      {/* Header Component */}
+      <Header showLanguageToggle={false} />
 
       <main className="max-w-md mx-auto px-4 py-8">
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">

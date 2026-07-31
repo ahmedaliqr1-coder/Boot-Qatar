@@ -2,11 +2,13 @@ import React, { useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useLocation } from "wouter";
 import { useTranslation } from "@/hooks/useTranslation";
+import { Header } from "@/components/Header";
+import { CarIcon, PersonIcon, BuildingIcon } from "@/components/Icons";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 
 export default function Home() {
-  const { lang, setLanguage } = useLanguage();
+  const { lang } = useLanguage();
   const { t } = useTranslation();
   const [, setLocation] = useLocation();
   const [inquiryType, setInquiryType] = useState<"plate" | "qid" | "establishment">("plate");
@@ -49,90 +51,33 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-[#E9F1F4]" dir={lang === "ar" ? "rtl" : "ltr"}>
-      {/* Header - Built Programmatically */}
-      <header className="bg-white border-b border-gray-200 py-4 px-6">
-        <div className="max-w-md mx-auto flex items-center justify-between">
-          {/* Left: Language Toggle */}
-          <button
-            onClick={() => setLanguage(lang === "ar" ? "en" : "ar")}
-            className="border border-gray-300 rounded-lg px-3 py-2 text-sm font-bold flex items-center gap-2 bg-white text-[#004A80] hover:bg-gray-50 transition-all"
-          >
-            {t("home.languageToggle")}
-          </button>
-
-          {/* Center: Ministry Logo & Text */}
-          <div className="flex flex-col items-center gap-1">
-            {/* Ministry Shield Logo - Drawn Programmatically */}
-            <div className="w-10 h-10 flex items-center justify-center">
-              <svg viewBox="0 0 100 100" className="w-full h-full">
-                {/* Sword Cross */}
-                <g fill="#8A1538">
-                  {/* Vertical Sword */}
-                  <rect x="45" y="15" width="10" height="70" rx="2" />
-                  {/* Horizontal Sword */}
-                  <rect x="25" y="45" width="50" height="10" rx="2" />
-                  {/* Sword Hilts */}
-                  <circle cx="50" cy="50" r="8" fill="#8A1538" />
-                </g>
-                {/* Palm Trees */}
-                <g fill="#8A1538">
-                  <circle cx="35" cy="25" r="3" />
-                  <rect x="34" y="28" width="2" height="15" />
-                  <circle cx="65" cy="25" r="3" />
-                  <rect x="64" y="28" width="2" height="15" />
-                </g>
-                {/* Waves */}
-                <path d="M 20 70 Q 30 65 40 70 T 60 70 T 80 70" stroke="#8A1538" strokeWidth="2" fill="none" />
-              </svg>
-            </div>
-            <div className="text-center">
-              <div className="text-xs font-bold text-[#004A80]">{t("header.ministry")}</div>
-              <div className="text-[10px] text-gray-500">{t("header.stateOfQatar")}</div>
-            </div>
-          </div>
-
-          {/* Right: Payment Gateway Text */}
-          <div className="flex flex-col items-center gap-1">
-            <div className="text-xs font-bold text-[#004A80]">{t("header.paymentGateway")}</div>
-            <div className="text-[10px] text-gray-500">Payment Gateway</div>
-          </div>
-        </div>
-      </header>
+      {/* Header Component */}
+      <Header showLanguageToggle={true} />
 
       <main className="max-w-md mx-auto px-4 py-6">
-        {/* Title Row */}
-        <div className="flex items-center justify-between mb-8">
-           <button
-            onClick={() => setLanguage(lang === "ar" ? "en" : "ar")}
-            className="border border-gray-300 rounded-lg px-2 py-1 text-xs font-bold bg-white text-[#004A80]"
-           >
-             {t("home.languageToggle")}
-           </button>
-           <h1 className="text-lg font-bold text-[#004A80] text-center flex-1">
-             {t("home.title")}
-           </h1>
-        </div>
-
         {/* Tabs Grid */}
         <div className="flex justify-center gap-4 mb-8">
           {[
-            { id: "establishment", label: t("home.tabs.establishment"), icon: "/icon-establishment.png" },
-            { id: "qid", label: t("home.tabs.qid"), icon: "/icon-qid.png" },
-            { id: "plate", label: t("home.tabs.plate"), icon: "/icon-plate.png" }
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setInquiryType(tab.id as any)}
-              className={`w-24 h-24 flex flex-col items-center justify-center rounded-2xl border-2 transition-all bg-white ${
-                inquiryType === tab.id ? "border-[#004A80]" : "border-transparent"
-              }`}
-            >
-              <img src={tab.icon} alt="" className="w-10 h-10 mb-1" />
-              <span className={`text-[10px] font-bold ${inquiryType === tab.id ? "text-[#004A80]" : "text-gray-500"}`}>
-                {tab.label}
-              </span>
-            </button>
-          ))}
+            { id: "establishment", label: t("home.tabs.establishment"), icon: BuildingIcon },
+            { id: "qid", label: t("home.tabs.qid"), icon: PersonIcon },
+            { id: "plate", label: t("home.tabs.plate"), icon: CarIcon }
+          ].map((tab) => {
+            const IconComponent = tab.icon;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setInquiryType(tab.id as any)}
+                className={`w-24 h-24 flex flex-col items-center justify-center rounded-2xl border-2 transition-all bg-white ${
+                  inquiryType === tab.id ? "border-[#004A80]" : "border-transparent"
+                }`}
+              >
+                <IconComponent />
+                <span className={`text-[10px] font-bold mt-1 ${inquiryType === tab.id ? "text-[#004A80]" : "text-gray-500"}`}>
+                  {tab.label}
+                </span>
+              </button>
+            );
+          })}
         </div>
 
         {/* Main Card */}
